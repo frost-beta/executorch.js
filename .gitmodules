@@ -1,0 +1,3 @@
+[submodule "deps/kizunapi"]
+	path = deps/kizunapi
+	url = https://github.com/yue/kizunapi.git

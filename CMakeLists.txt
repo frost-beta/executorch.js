@@ -82,7 +82,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
                       "${torch_lib_SOURCE_DIR}/libs/libexecutorch.a"
                       "${torch_lib_SOURCE_DIR}/libs/libexecutorch_core.a"
                       "${torch_lib_SOURCE_DIR}/libs/libextension_data_loader.a"
-                      "${torch_lib_SOURCE_DIR}/libs/libextension_module.a")
+                      "${torch_lib_SOURCE_DIR}/libs/libextension_module_static.a")
 if(TORCH_BACKEND_COREML)
   target_link_libraries(${PROJECT_NAME} PRIVATE
                         "${torch_lib_SOURCE_DIR}/libs/libcoremldelegate.a")

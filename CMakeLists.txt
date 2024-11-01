@@ -21,7 +21,7 @@ set(TORCH_BINARY_URL "https://github.com/frost-beta/executorch-binaries/releases
 option(TORCH_BACKEND_COREML "Build with CoreML backend" OFF)
 option(TORCH_BACKEND_MPS "Build with MPS backend" OFF)
 option(TORCH_BACKEND_XNNPACK "Build with XNNPACK backend" OFF)
-option(TORCH_KERNELS_OPTIMIZED "Build with Optimzied kernels" OFF)
+option(TORCH_KERNELS_OPTIMIZED "Build with Optimzied kernels" ON)
 option(TORCH_KERNELS_PORTABLE "Build with Portable kernels" OFF)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -75,38 +75,40 @@ else()
 endif()
 FetchContent_Declare(torch_lib URL "${TORCH_BINARY_URL}/v${TORCH_VERSION}/executorch-${TORCH_OS}-${TORCH_ARCH}-full.zip")
 FetchContent_MakeAvailable(torch_lib)
+set(TORCH_LIBS "${torch_lib_SOURCE_DIR}/libs")
+set(TORCH_LIBS_WHOLE "LINK_LIBRARY:WHOLE_ARCHIVE,${TORCH_LIBS}")
 
 # Link with correct libs.
 target_include_directories(${PROJECT_NAME} PRIVATE
                            "${torch_lib_SOURCE_DIR}/include")
 target_link_libraries(${PROJECT_NAME} PRIVATE
-                      "${torch_lib_SOURCE_DIR}/libs/libexecutorch.a"
-                      "${torch_lib_SOURCE_DIR}/libs/libexecutorch_core.a"
-                      "${torch_lib_SOURCE_DIR}/libs/libextension_data_loader.a"
-                      "${torch_lib_SOURCE_DIR}/libs/libextension_module_static.a")
+                      "${TORCH_LIBS}/libexecutorch_core.a"
+                      "${TORCH_LIBS}/libextension_data_loader.a"
+                      "${TORCH_LIBS}/libextension_module_static.a"
+                      "$<${TORCH_LIBS_WHOLE}/libexecutorch.a>")
 if(TORCH_BACKEND_COREML)
   target_link_libraries(${PROJECT_NAME} PRIVATE
-                        "${torch_lib_SOURCE_DIR}/libs/libcoremldelegate.a")
+                        "${TORCH_LIBS}/libcoremldelegate.a")
 endif()
 if(TORCH_BACKEND_MPS)
   target_link_libraries(${PROJECT_NAME} PRIVATE
-                        "${torch_lib_SOURCE_DIR}/libs/libmpsdelegate.a")
+                        "${TORCH_LIBS}/libmpsdelegate.a")
 endif()
 if(TORCH_BACKEND_XNNPACK)
   target_link_libraries(${PROJECT_NAME} PRIVATE
-                        "${torch_lib_SOURCE_DIR}/libs/libXNNPACK.a"
-                        "${torch_lib_SOURCE_DIR}/libs/libcpuinfo.a"
-                        "${torch_lib_SOURCE_DIR}/libs/libpthreadpool.a"
-                        "${torch_lib_SOURCE_DIR}/libs/libxnnpack_backend.a"
-                        "${torch_lib_SOURCE_DIR}/libs/libmicrokernels-prod.a")
+                        "${TORCH_LIBS}/libXNNPACK.a"
+                        "${TORCH_LIBS}/libcpuinfo.a"
+                        "${TORCH_LIBS}/libpthreadpool.a"
+                        "${TORCH_LIBS}/libxnnpack_backend.a"
+                        "${TORCH_LIBS}/libmicrokernels-prod.a")
 endif()
 if(TORCH_KERNELS_OPTIMIZED)
   target_link_libraries(${PROJECT_NAME} PRIVATE
-                        "${torch_lib_SOURCE_DIR}/libs/liboptimized_kernels.a"
-                        "${torch_lib_SOURCE_DIR}/libs/liboptimized_native_cpu_ops_lib.a")
+                        "$<${TORCH_LIBS_WHOLE}/liboptimized_kernels.a>"
+                        "$<${TORCH_LIBS_WHOLE}/liboptimized_native_cpu_ops_lib.a>")
 endif()
 if(TORCH_KERNELS_PORTABLE)
   target_link_libraries(${PROJECT_NAME} PRIVATE
-                        "${torch_lib_SOURCE_DIR}/libs/libportable_kernels.a"
-                        "${torch_lib_SOURCE_DIR}/libs/libportable_ops_lib.a")
+                        "$<${TORCH_LIBS_WHOLE}/libportable_kernels.a>"
+                        "$<${TORCH_LIBS_WHOLE}/libportable_ops_lib.a>")
 endif()

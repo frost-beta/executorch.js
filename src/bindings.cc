@@ -11,6 +11,8 @@ namespace er = executorch::runtime;
 
 namespace ki {
 
+// ============================= Helpers ===============================
+
 template<>
 struct Type<etjs::UnmanagedBuffer> {
   static constexpr const char* name = "UnmanagedBuffer";
@@ -24,6 +26,8 @@ struct Type<etjs::UnmanagedBuffer> {
     return etjs::UnmanagedBuffer{data, size};
   }
 };
+
+// ======================== Intermediate types =========================
 
 template<>
 struct Type<er::Error> {
@@ -76,6 +80,81 @@ struct Type<er::Result<T>> {
   }
 };
 
+template<typename T>
+struct Type<er::Span<T>> {
+  static constexpr const char* name = "Array";
+  static napi_status ToNode(napi_env env,
+                            const er::Span<T>& span,
+                            napi_value* result) {
+    napi_status s = napi_create_array_with_length(env, span.size(), result);
+    if (s != napi_ok) return s;
+    for (size_t i = 0; i < span.size(); ++i) {
+      napi_value el;
+      s = ConvertToNode(env, span[i], &el);
+      if (s != napi_ok) return s;
+      s = napi_set_element(env, *result, i, el);
+      if (s != napi_ok) return s;
+    }
+    return napi_ok;
+  }
+};
+
+template<>
+struct Type<er::Tag> {
+  static constexpr const char* name = "Tag";
+  static inline napi_status ToNode(napi_env env,
+                                   er::Tag value,
+                                   napi_value* result) {
+    return ConvertToNode(env, static_cast<uint32_t>(value), result);
+  }
+};
+
+template<>
+struct Type<er::etensor::ScalarType> {
+  static constexpr const char* name = "ScalarType";
+  static inline napi_status ToNode(napi_env env,
+                                   er::etensor::ScalarType value,
+                                   napi_value* result) {
+    return ConvertToNode(env, static_cast<int8_t>(value), result);
+  }
+};
+
+// ============================= Exports ===============================
+
+template<>
+struct Type<er::TensorInfo> {
+  static constexpr const char* name = "TensorInfo";
+  static napi_status ToNode(napi_env env,
+                            const er::TensorInfo& value,
+                            napi_value* result) {
+    *result = CreateObject(env);
+    Set(env, *result,
+        "sizes", value.sizes(),
+        "dimOrder", value.dim_order(),
+        "scalarType", value.scalar_type(),
+        "isMemoryPlanned", value.is_memory_planned(),
+        "nbytes", value.nbytes());
+    return napi_ok;
+  }
+};
+
+template<>
+struct Type<er::MethodMeta> : public AllowPassByValue<er::MethodMeta> {
+  static constexpr const char* name = "MethodMeta";
+  static void Define(napi_env env, napi_value, napi_value prototype) {
+    Set(env, prototype,
+        "name", &er::MethodMeta::name,
+        "numInputs", &er::MethodMeta::num_inputs,
+        "inputTag", &er::MethodMeta::input_tag,
+        "inputTensorMeta", &er::MethodMeta::input_tensor_meta,
+        "numOutputs", &er::MethodMeta::num_outputs,
+        "outputTag", &er::MethodMeta::output_tag,
+        "outputTensorMeta", &er::MethodMeta::output_tensor_meta,
+        "numMemoryPlannedBuffers", &er::MethodMeta::num_memory_planned_buffers,
+        "memoryPlannedBufferSize", &er::MethodMeta::memory_planned_buffer_size);
+  }
+};
+
 template<>
 struct Type<ee::Module> {
   static constexpr const char* name = "Module";
@@ -85,7 +164,8 @@ struct Type<ee::Module> {
         "isLoaded", &ee::Module::is_loaded,
         "methodNames", &ee::Module::method_names,
         "loadMethod", &ee::Module::load_method,
-        "isMethodLoaded", &ee::Module::is_method_loaded);
+        "isMethodLoaded", &ee::Module::is_method_loaded,
+        "methodMeta", &ee::Module::method_meta);
   }
   static inline ee::Module* Constructor(Arguments* args) {
     if (auto s = args->TryGetNext<std::string>(); s) {

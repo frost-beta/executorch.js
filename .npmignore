@@ -12,6 +12,7 @@
 # Everything else should keep same with .gitignore
 *.swp
 *.tgz
+*.pte
 
 yarn.lock
 package-lock.json

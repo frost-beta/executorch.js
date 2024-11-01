@@ -25,7 +25,7 @@ option(TORCH_KERNELS_OPTIMIZED "Build with Optimzied kernels" OFF)
 option(TORCH_KERNELS_PORTABLE "Build with Portable kernels" OFF)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(TORCH_BACKEND_COREML ON)
+  set(TORCH_BACKEND_MPS ON)
 endif()
 
 # ----------------------------- Node-API -------------------------------
@@ -35,7 +35,7 @@ add_definitions(-DNAPI_VERSION=9)
 
 # Use node headers/libs provided by cmake-js..
 add_library(${PROJECT_NAME} SHARED ${CMAKE_JS_SRC})
-target_include_directories(${PROJECT_NAME} PRIVATE "." ${CMAKE_JS_INC})
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_JS_INC})
 target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB})
 set_target_properties(${PROJECT_NAME} PROPERTIES
                       PREFIX ""
@@ -53,6 +53,7 @@ endif()
 # Add source files.
 file(GLOB SOURCE_FILES "src/*")
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCE_FILES})
+target_include_directories(${PROJECT_NAME} PUBLIC ".")
 
 # Use kizunapi.
 target_include_directories(${PROJECT_NAME} PRIVATE "deps/kizunapi")

@@ -1,10 +1,11 @@
 #include <executorch/extension/data_loader/buffer_data_loader.h>
 #include <executorch/extension/module/module.h>
 #include <executorch/runtime/platform/runtime.h>
-#include <kizunapi.h>
 
 #include "src/evalue.h"
 #include "src/error.h"
+#include "src/scalar.h"
+#include "src/tensor.h"
 
 namespace ee = executorch::extension;
 namespace er = executorch::runtime;
@@ -38,19 +39,6 @@ struct Type<etjs::UnmanagedBuffer> {
 };
 
 // ======================== Intermediate types =========================
-
-template<>
-struct Type<er::Error> {
-  static constexpr const char* name = "Error";
-  static napi_status ToNode(napi_env env, er::Error value, napi_value* result) {
-    if (value == er::Error::Ok)
-      return napi_get_undefined(env, result);
-    return napi_create_error(env,
-                             ToNodeValue(env, etjs::ErrorCodeToString(value)),
-                             ToNodeValue(env, etjs::ErrorCodeToMessage(value)),
-                             result);
-  }
-};
 
 template<>
 struct Type<er::EventTracer*> {
@@ -167,7 +155,8 @@ napi_value Init(napi_env env, napi_value exports) {
   er::runtime_init();
   ki::Set(env, exports,
           "Module", ki::Class<ee::Module>(),
-          "Scalar", ki::Class<ea::Scalar>());
+          "Scalar", ki::Class<ea::Scalar>(),
+          "Tensor", ki::Class<etjs::Tensor>());
   return exports;
 }
 

@@ -1,20 +1,8 @@
 #include "src/evalue.h"
+#include "src/scalar.h"
+#include "src/tensor.h"
 
 namespace ki {
-
-// static
-void Type<ea::Scalar>::Define(napi_env, napi_value, napi_value) {
-}
-
-// static
-ea::Scalar* Type<ea::Scalar>::Constructor(Arguments* args) {
-  if (auto b = args->TryGetNext<bool>(); b)
-    return new ea::Scalar(b.value());
-  if (auto d = args->TryGetNext<double>(); d)
-    return new ea::Scalar(d.value());
-  args->ThrowError("Boolean or Number");
-  return nullptr;
-}
 
 // static
 napi_status Type<er::EValue>::ToNode(napi_env env,

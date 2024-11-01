@@ -2,6 +2,7 @@
 #define SRC_ERROR_H_
 
 #include <executorch/runtime/core/error.h>
+#include <kizunapi.h>
 
 namespace etjs {
 
@@ -86,5 +87,22 @@ inline const char* ErrorCodeToMessage(executorch::runtime::Error value) {
 }
 
 }  // namespace etjs
+
+namespace ki {
+
+template<>
+struct Type<er::Error> {
+  static constexpr const char* name = "Error";
+  static napi_status ToNode(napi_env env, er::Error value, napi_value* result) {
+    if (value == er::Error::Ok)
+      return napi_get_undefined(env, result);
+    return napi_create_error(env,
+                             ToNodeValue(env, etjs::ErrorCodeToString(value)),
+                             ToNodeValue(env, etjs::ErrorCodeToMessage(value)),
+                             result);
+  }
+};
+
+}  // namespace ki
 
 #endif  // SRC_ERROR_H_

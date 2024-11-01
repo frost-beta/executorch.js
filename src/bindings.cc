@@ -3,11 +3,21 @@
 #include <executorch/runtime/platform/runtime.h>
 #include <kizunapi.h>
 
-#include "src/buffer.h"
+#include "src/evalue.h"
 #include "src/error.h"
 
 namespace ee = executorch::extension;
 namespace er = executorch::runtime;
+
+namespace etjs {
+
+// Intermediate type for representing typed buffer.
+struct UnmanagedBuffer {
+  const void* data;
+  size_t size;
+};
+
+}  // namespace etjs
 
 namespace ki {
 
@@ -80,45 +90,6 @@ struct Type<er::Result<T>> {
   }
 };
 
-template<typename T>
-struct Type<er::Span<T>> {
-  static constexpr const char* name = "Array";
-  static napi_status ToNode(napi_env env,
-                            const er::Span<T>& span,
-                            napi_value* result) {
-    napi_status s = napi_create_array_with_length(env, span.size(), result);
-    if (s != napi_ok) return s;
-    for (size_t i = 0; i < span.size(); ++i) {
-      napi_value el;
-      s = ConvertToNode(env, span[i], &el);
-      if (s != napi_ok) return s;
-      s = napi_set_element(env, *result, i, el);
-      if (s != napi_ok) return s;
-    }
-    return napi_ok;
-  }
-};
-
-template<>
-struct Type<er::Tag> {
-  static constexpr const char* name = "Tag";
-  static inline napi_status ToNode(napi_env env,
-                                   er::Tag value,
-                                   napi_value* result) {
-    return ConvertToNode(env, static_cast<uint32_t>(value), result);
-  }
-};
-
-template<>
-struct Type<er::etensor::ScalarType> {
-  static constexpr const char* name = "ScalarType";
-  static inline napi_status ToNode(napi_env env,
-                                   er::etensor::ScalarType value,
-                                   napi_value* result) {
-    return ConvertToNode(env, static_cast<int8_t>(value), result);
-  }
-};
-
 // ============================= Exports ===============================
 
 template<>
@@ -165,7 +136,12 @@ struct Type<ee::Module> {
         "methodNames", &ee::Module::method_names,
         "loadMethod", &ee::Module::load_method,
         "isMethodLoaded", &ee::Module::is_method_loaded,
-        "methodMeta", &ee::Module::method_meta);
+        "methodMeta", &ee::Module::method_meta,
+        "execute", static_cast<er::Result<std::vector<er::EValue>>
+                                   (ee::Module::*)(
+                                        const std::string&,
+                                        const std::vector<er::EValue>&)>(
+                                             &ee::Module::execute));
   }
   static inline ee::Module* Constructor(Arguments* args) {
     if (auto s = args->TryGetNext<std::string>(); s) {
@@ -190,7 +166,8 @@ namespace {
 napi_value Init(napi_env env, napi_value exports) {
   er::runtime_init();
   ki::Set(env, exports,
-          "Module", ki::Class<ee::Module>());
+          "Module", ki::Class<ee::Module>(),
+          "Scalar", ki::Class<ea::Scalar>());
   return exports;
 }
 

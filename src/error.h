@@ -51,37 +51,37 @@ inline const char* ErrorCodeToMessage(executorch::runtime::Error value) {
     case Error::Ok:
       return "";
     case Error::Internal:
-      return "An internal error occurred";
+      return "An internal error occurred.";
     case Error::InvalidState:
-      return "Executor is in an invalid state for a target operation";
+      return "Executor is in an invalid state for a target operation.";
     case Error::EndOfMethod:
-      return "There are no more steps of execution to run";
+      return "There are no more steps of execution to run.";
     case Error::NotSupported:
-      return "Operation is not supported in the current context";
+      return "Operation is not supported in the current context.";
     case Error::NotImplemented:
-      return "Operation is not yet implemented";
+      return "Operation is not yet implemented.";
     case Error::InvalidArgument:
-      return "User provided an invalid argument";
+      return "User provided an invalid argument.";
     case Error::InvalidType:
-      return "Object is an invalid type for the operation";
+      return "Object is an invalid type for the operation.";
     case Error::OperatorMissing:
-      return "Operator(s) missing in the operator registry";
+      return "Operator(s) missing in the operator registry.";
     case Error::NotFound:
-      return "Requested resource could not be found";
+      return "Requested resource could not be found.";
     case Error::MemoryAllocationFailed:
-      return "Could not allocate the requested memory";
+      return "Could not allocate the requested memory.";
     case Error::AccessFailed:
-      return "Could not access a resource";
+      return "Could not access a resource.";
     case Error::InvalidProgram:
-      return "Error caused by the contents of a program";
+      return "Error caused by the contents of a program.";
     case Error::DelegateInvalidCompatibility:
-      return "Backend receives an incompatible delegate version";
+      return "Backend receives an incompatible delegate version.";
     case Error::DelegateMemoryAllocationFailed:
-      return "Backend fails to allocate memory";
+      return "Backend fails to allocate memory.";
     case Error::DelegateInvalidHandle:
-      return "The handle is invalid";
+      return "The handle is invalid.";
     default:
-      return "Unknown error";
+      return "Unknown error.";
   }
 }
 

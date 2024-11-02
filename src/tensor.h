@@ -8,21 +8,46 @@ namespace ea = executorch::aten;
 
 namespace etjs {
 
+// Intermediate type for representing typed buffer.
+struct Buffer {
+  void* data;
+  size_t size;
+};
+
+// Provide storage for tensor data.
 class Tensor {
  public:
   Tensor(std::vector<uint8_t> data,
          std::vector<ea::SizesType> shape,
-         ea::ScalarType dtype);
+         ea::ScalarType dtype,
+         std::vector<ea::DimOrderType> dim_order = {},
+         std::vector<ea::StridesType> strides = {});
+  Tensor(Buffer data,
+         std::vector<ea::SizesType> shape,
+         ea::ScalarType dtype,
+         std::vector<ea::DimOrderType> dim_order = {},
+         std::vector<ea::StridesType> strides = {});
   ~Tensor();
 
-  ea::TensorImpl* impl() const { return &impl_; }
+  ea::TensorImpl* impl() { return &impl_; }
+
+  const Buffer& data() const { return data_; }
+  const std::vector<ea::SizesType>& shape() const { return shape_; }
+  const std::vector<ea::DimOrderType>& dim_order() const { return dim_order_; }
+  const std::vector<ea::StridesType>& strides() const { return strides_; }
+  size_t size() const { return impl_.numel(); }
+  size_t nbytes() const { return impl_.nbytes(); }
+  size_t itemsize() const { return impl_.element_size(); }
+  ea::ScalarType dtype() const { return impl_.dtype(); }
 
  private:
-  std::vector<uint8_t> data_;
+  Buffer data_;
   std::vector<ea::SizesType> shape_;
   std::vector<ea::DimOrderType> dim_order_;
   std::vector<ea::StridesType> strides_;
   ea::TensorImpl impl_;
+  // Only used when this class manages its own data.
+  std::vector<uint8_t> managed_data_;
 };
 
 }  // namespace etjs
@@ -30,13 +55,30 @@ class Tensor {
 namespace ki {
 
 template<>
-struct Type<etjs::Tensor> : public AllowPassByValue<etjs::Tensor> {
+struct Type<ea::Tensor> {
   static constexpr const char* name = "Tensor";
-  static constexpr bool allow_function_call = true;
+  static napi_status ToNode(napi_env env,
+                            const ea::Tensor& value,
+                            napi_value* result);
+};
+
+template<>
+struct Type<etjs::Buffer> {
+  static constexpr const char* name = "Buffer";
+  static napi_status ToNode(napi_env env,
+                            const etjs::Buffer& value,
+                            napi_value* result);
+  static std::optional<etjs::Buffer> FromNode(napi_env env, napi_value value);
+};
+
+template<>
+struct Type<etjs::Tensor> {
+  static constexpr const char* name = "Tensor";
   static void Define(napi_env env, napi_value, napi_value prototype);
-  static etjs::Tensor* Constructor(napi_env env,
-                                   napi_value value,
-                                   std::optional<ea::ScalarType> dtype);
+  static etjs::Tensor* Constructor(etjs::Buffer buffer,
+                                   std::vector<ea::SizesType> shape,
+                                   ea::ScalarType dtype);
+  static void Destructor(etjs::Tensor* ptr);
 };
 
 }  // namespace ki

@@ -11,6 +11,8 @@ napi_status Type<er::EValue>::ToNode(napi_env env,
   switch (evalue.tag) {
     case er::Tag::None:
       return napi_get_null(env, result);
+    case er::Tag::Tensor:
+      return ConvertToNode(env, evalue.toTensor(), result);
     case er::Tag::String:
       return ConvertToNode(env, evalue.toString().data(), result);
     case er::Tag::Bool:
@@ -25,6 +27,8 @@ napi_status Type<er::EValue>::ToNode(napi_env env,
       return ConvertToNode(env, evalue.toDoubleList(), result);
     case er::Tag::ListInt:
       return ConvertToNode(env, evalue.toIntList(), result);
+    case er::Tag::ListTensor:
+      return ConvertToNode(env, evalue.toTensorList(), result);
     default:
       return napi_generic_failure;
   }
@@ -34,8 +38,7 @@ napi_status Type<er::EValue>::ToNode(napi_env env,
 std::optional<er::EValue> Type<er::EValue>::FromNode(napi_env env,
                                                      napi_value value) {
   napi_valuetype type;
-  napi_status s = napi_typeof(env, value, &type);
-  if (s != napi_ok)
+  if (napi_typeof(env, value, &type) != napi_ok)
     return std::nullopt;
   switch (type) {
     case napi_null:
@@ -45,6 +48,8 @@ std::optional<er::EValue> Type<er::EValue>::FromNode(napi_env env,
     case napi_boolean:
       return er::EValue(FromNodeTo<bool>(env, value).value());
     case napi_object:
+      if (auto t = FromNodeTo<etjs::Tensor*>(env, value); t)
+        return er::EValue(ea::Tensor(t.value()->impl()));
       if (auto s = FromNodeTo<ea::Scalar*>(env, value); s)
         return er::EValue(*s.value());
       // EValue does not store the array, skip it for now.

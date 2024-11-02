@@ -6,6 +6,12 @@
 
 namespace ea = executorch::aten;
 
+namespace etjs {
+
+napi_value CreateScalarTypeEnum(napi_env env);
+
+}  // namespace etjs
+
 namespace ki {
 
 template<>

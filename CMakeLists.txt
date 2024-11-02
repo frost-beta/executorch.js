@@ -21,8 +21,8 @@ set(TORCH_BINARY_URL "https://github.com/frost-beta/executorch-binaries/releases
 option(TORCH_BACKEND_COREML "Build with CoreML backend" OFF)
 option(TORCH_BACKEND_MPS "Build with MPS backend" OFF)
 option(TORCH_BACKEND_XNNPACK "Build with XNNPACK backend" OFF)
-option(TORCH_KERNELS_OPTIMIZED "Build with Optimzied kernels" ON)
-option(TORCH_KERNELS_PORTABLE "Build with Portable kernels" OFF)
+option(TORCH_KERNELS_OPTIMIZED "Build with Optimzied kernels" OFF)
+option(TORCH_KERNELS_PORTABLE "Build with Portable kernels" ON)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(TORCH_BACKEND_MPS ON)
@@ -87,12 +87,18 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
                       "${TORCH_LIBS}/libextension_module_static.a"
                       "$<${TORCH_LIBS_WHOLE}/libexecutorch.a>")
 if(TORCH_BACKEND_COREML)
+  find_library(ACCELERATE_FRAMEWORK Accelerate)
+  find_library(COREML_FRAMEWORK CoreML)
   target_link_libraries(${PROJECT_NAME} PRIVATE
-                        "${TORCH_LIBS}/libcoremldelegate.a")
+                        ${ACCELERATE_FRAMEWORK}
+                        ${COREML_FRAMEWORK}
+                        "$<${TORCH_LIBS_WHOLE}/libcoremldelegate.a>")
 endif()
 if(TORCH_BACKEND_MPS)
+  find_library(MPS_FRAMEWORK MetalPerformanceShaders)
   target_link_libraries(${PROJECT_NAME} PRIVATE
-                        "${TORCH_LIBS}/libmpsdelegate.a")
+                        ${MPS_FRAMEWORK}
+                        "$<${TORCH_LIBS_WHOLE}/libmpsdelegate.a>")
 endif()
 if(TORCH_BACKEND_XNNPACK)
   target_link_libraries(${PROJECT_NAME} PRIVATE

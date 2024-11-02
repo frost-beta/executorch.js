@@ -10,33 +10,7 @@
 namespace ee = executorch::extension;
 namespace er = executorch::runtime;
 
-namespace etjs {
-
-// Intermediate type for representing typed buffer.
-struct UnmanagedBuffer {
-  const void* data;
-  size_t size;
-};
-
-}  // namespace etjs
-
 namespace ki {
-
-// ============================= Helpers ===============================
-
-template<>
-struct Type<etjs::UnmanagedBuffer> {
-  static constexpr const char* name = "UnmanagedBuffer";
-  static std::optional<etjs::UnmanagedBuffer> FromNode(napi_env env,
-                                                       napi_value value) {
-    void* data;
-    size_t size;
-    if (napi_get_buffer_info(env, value, &data, &size) != napi_ok)
-      return std::nullopt;
-    // We are assuming the Buffer is kept alive in JS.
-    return etjs::UnmanagedBuffer{data, size};
-  }
-};
 
 // ======================== Intermediate types =========================
 
@@ -135,7 +109,7 @@ struct Type<ee::Module> {
     if (auto s = args->TryGetNext<std::string>(); s) {
       return new ee::Module(s.value());
     }
-    if (auto u = args->GetNext<etjs::UnmanagedBuffer>(); u) {
+    if (auto u = args->GetNext<etjs::Buffer>(); u) {
       return new ee::Module(std::make_unique<ee::BufferDataLoader>(u->data,
                                                                    u->size));
     }
@@ -156,7 +130,8 @@ napi_value Init(napi_env env, napi_value exports) {
   ki::Set(env, exports,
           "Module", ki::Class<ee::Module>(),
           "Scalar", ki::Class<ea::Scalar>(),
-          "Tensor", ki::Class<etjs::Tensor>());
+          "Tensor", ki::Class<etjs::Tensor>(),
+          "ScalarType", etjs::CreateScalarTypeEnum(env));
   return exports;
 }
 

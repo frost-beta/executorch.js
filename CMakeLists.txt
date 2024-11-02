@@ -24,12 +24,6 @@ option(TORCH_BACKEND_XNNPACK "Build with XNNPACK backend" OFF)
 option(TORCH_KERNELS_OPTIMIZED "Build with Optimzied kernels" OFF)
 option(TORCH_KERNELS_PORTABLE "Build with Portable kernels" ON)
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  if(NOT TORCH_BACKEND_XNNPACK AND NOT TORCH_BACKEND_COREML)
-    set(TORCH_BACKEND_MPS ON)
-  endif()
-endif()
-
 # ----------------------------- Node-API -------------------------------
 
 # Define NAPI_VERSION.

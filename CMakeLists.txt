@@ -16,7 +16,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # ----------------------------- Config ---------------------------------
 
-set(TORCH_VERSION "0.0.1" CACHE STRING "The version of executorch-binaries")
+set(TORCH_VERSION "0.0.2" CACHE STRING "The version of executorch-binaries")
 set(TORCH_BINARY_URL "https://github.com/frost-beta/executorch-binaries/releases/download" CACHE STRING "The download URL of executorch-binaries")
 option(TORCH_BACKEND_COREML "Build with CoreML backend" OFF)
 option(TORCH_BACKEND_MPS "Build with MPS backend" OFF)
@@ -25,7 +25,9 @@ option(TORCH_KERNELS_OPTIMIZED "Build with Optimzied kernels" OFF)
 option(TORCH_KERNELS_PORTABLE "Build with Portable kernels" ON)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(TORCH_BACKEND_MPS ON)
+  if(NOT TORCH_BACKEND_XNNPACK AND NOT TORCH_BACKEND_COREML)
+    set(TORCH_BACKEND_MPS ON)
+  endif()
 endif()
 
 # ----------------------------- Node-API -------------------------------
@@ -73,7 +75,7 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64")
 else()
   message(FATAL_ERROR "Unsupported arch: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
-FetchContent_Declare(torch_lib URL "${TORCH_BINARY_URL}/v${TORCH_VERSION}/executorch-${TORCH_OS}-${TORCH_ARCH}-full.zip")
+FetchContent_Declare(torch_lib URL "${TORCH_BINARY_URL}/v${TORCH_VERSION}/executorch-full-release-${TORCH_OS}-${TORCH_ARCH}.zip")
 FetchContent_MakeAvailable(torch_lib)
 set(TORCH_LIBS "${torch_lib_SOURCE_DIR}/libs")
 set(TORCH_LIBS_WHOLE "LINK_LIBRARY:WHOLE_ARCHIVE,${TORCH_LIBS}")
@@ -95,9 +97,15 @@ if(TORCH_BACKEND_COREML)
                         "$<${TORCH_LIBS_WHOLE}/libcoremldelegate.a>")
 endif()
 if(TORCH_BACKEND_MPS)
+  find_library(FOUNDATION_FRAMEWORK Foundation)
+  find_library(METAL_FRAMEWORK Metal)
   find_library(MPS_FRAMEWORK MetalPerformanceShaders)
+  find_library(MPS_GRAPH_FRAMEWORK MetalPerformanceShadersGraph)
   target_link_libraries(${PROJECT_NAME} PRIVATE
+                        ${FOUNDATION_FRAMEWORK}
+                        ${METAL_FRAMEWORK}
                         ${MPS_FRAMEWORK}
+                        ${MPS_GRAPH_FRAMEWORK}
                         "$<${TORCH_LIBS_WHOLE}/libmpsdelegate.a>")
 endif()
 if(TORCH_BACKEND_XNNPACK)
@@ -105,8 +113,8 @@ if(TORCH_BACKEND_XNNPACK)
                         "${TORCH_LIBS}/libXNNPACK.a"
                         "${TORCH_LIBS}/libcpuinfo.a"
                         "${TORCH_LIBS}/libpthreadpool.a"
-                        "${TORCH_LIBS}/libxnnpack_backend.a"
-                        "${TORCH_LIBS}/libmicrokernels-prod.a")
+                        "${TORCH_LIBS}/libmicrokernels-prod.a"
+                        "$<${TORCH_LIBS_WHOLE}/libxnnpack_backend.a>")
 endif()
 if(TORCH_KERNELS_OPTIMIZED)
   target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -118,3 +126,18 @@ if(TORCH_KERNELS_PORTABLE)
                         "$<${TORCH_LIBS_WHOLE}/libportable_kernels.a>"
                         "$<${TORCH_LIBS_WHOLE}/libportable_ops_lib.a>")
 endif()
+
+# --------------------------- Summary ----------------------------------
+
+message(STATUS "")
+message(STATUS "******** Summary ********")
+message(STATUS "  CMAKE_BUILD_TYPE              : ${CMAKE_BUILD_TYPE}")
+message(STATUS "  CMAKE_CXX_STANDARD            : ${CMAKE_CXX_STANDARD}")
+message(STATUS "  TORCH_VERSION                 : ${TORCH_VERSION}")
+message(STATUS "  TORCH_BINARY_URL              : ${TORCH_BINARY_URL}")
+message(STATUS "  TORCH_BACKEND_COREML          : ${TORCH_BACKEND_COREML}")
+message(STATUS "  TORCH_BACKEND_MPS             : ${TORCH_BACKEND_MPS}")
+message(STATUS "  TORCH_BACKEND_XNNPACK         : ${TORCH_BACKEND_XNNPACK}")
+message(STATUS "  TORCH_KERNELS_OPTIMIZED       : ${TORCH_KERNELS_OPTIMIZED}")
+message(STATUS "  TORCH_KERNELS_PORTABLE        : ${TORCH_KERNELS_PORTABLE}")
+message(STATUS "")

@@ -16,10 +16,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [linux, mac]
-        arch: [x64]
-        include:
-          - os: mac
+        arch: [arm64, x64]
+        backend: [xnnpack, mps]
+        exclude:
+          - os: linux
             arch: arm64
+          - os: linux
+            backend: mps
 
     steps:
       - name: Checkout
@@ -27,17 +30,27 @@ jobs:
         with:
           submodules: true
 
+      - id: backend
+        name: Backend name
+        uses: ASzc/change-string-case-action@v6
+        with:
+          string: ${{ matrix.backend }}
+
       - name: Build
-        run: yarn && yarn build -p
+        run: |
+          yarn
+          yarn build \
+            -p 4     \
+            --CDTORCH_BACKEND_${{ steps.backend.outputs.uppercase }}=ON
 
       - name: Prepare .node file
-        run: cp build/Release/executorch.node executorch-${{ matrix.os }}-${{ matrix.arch }}.node
+        run: cp build/Release/executorch.node executorch-${{ matrix.backend }}-${{ matrix.os }}-${{ matrix.arch }}.node
 
       - name: Upload Binary Files
         uses: actions/upload-artifact@v4
         with:
-          name: executorch-${{ matrix.os }}-${{ matrix.arch }}
-          path: executorch-${{ matrix.os }}-${{ matrix.arch }}.node
+          name: executorch-${{ matrix.backend }}-${{ matrix.os }}-${{ matrix.arch }}
+          path: executorch-*.node
           retention-days: 1
 
   release:

@@ -18,13 +18,13 @@ struct Buffer {
 class Tensor {
  public:
   Tensor(std::vector<uint8_t> data,
-         std::vector<ea::SizesType> shape,
          ea::ScalarType dtype,
+         std::vector<ea::SizesType> shape,
          std::vector<ea::DimOrderType> dim_order = {},
          std::vector<ea::StridesType> strides = {});
   Tensor(Buffer data,
-         std::vector<ea::SizesType> shape,
          ea::ScalarType dtype,
+         std::vector<ea::SizesType> shape,
          std::vector<ea::DimOrderType> dim_order = {},
          std::vector<ea::StridesType> strides = {});
   ~Tensor();
@@ -32,13 +32,13 @@ class Tensor {
   ea::TensorImpl* impl() { return &impl_; }
 
   const Buffer& data() const { return data_; }
+  ea::ScalarType dtype() const { return impl_.dtype(); }
   const std::vector<ea::SizesType>& shape() const { return shape_; }
   const std::vector<ea::DimOrderType>& dim_order() const { return dim_order_; }
   const std::vector<ea::StridesType>& strides() const { return strides_; }
   size_t size() const { return impl_.numel(); }
   size_t nbytes() const { return impl_.nbytes(); }
   size_t itemsize() const { return impl_.element_size(); }
-  ea::ScalarType dtype() const { return impl_.dtype(); }
 
  private:
   Buffer data_;
@@ -75,9 +75,10 @@ template<>
 struct Type<etjs::Tensor> {
   static constexpr const char* name = "Tensor";
   static void Define(napi_env env, napi_value, napi_value prototype);
-  static etjs::Tensor* Constructor(etjs::Buffer buffer,
-                                   std::vector<ea::SizesType> shape,
-                                   ea::ScalarType dtype);
+  static etjs::Tensor* Constructor(
+      std::variant<etjs::Buffer, std::vector<double>> data,
+      ea::ScalarType dtype,
+      std::vector<ea::SizesType> shape);
   static void Destructor(etjs::Tensor* ptr);
 };
 

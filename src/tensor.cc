@@ -15,7 +15,7 @@ namespace {
 
 std::vector<ea::DimOrderType> DefaultDimOrder(
     size_t dim,
-    const std::vector<ea::StridesType>& strides = {}) {
+    const std::vector<ea::StridesType>& strides) {
   std::vector<ea::DimOrderType> dim_order(dim);
   std::iota(dim_order.begin(), dim_order.end(), 0);
   if (!strides.empty()) {
@@ -40,26 +40,35 @@ std::vector<ea::StridesType> DefaultStrides(
 }  // namespace
 
 Tensor::Tensor(std::vector<uint8_t> data,
-               std::vector<ea::SizesType> shape,
                ea::ScalarType dtype,
+               std::vector<ea::SizesType> shape,
                std::vector<ea::DimOrderType> dim_order,
                std::vector<ea::StridesType> strides)
-    : Tensor(Buffer{data.data(), data.size()}, std::move(shape), dtype,
-             std::move(dim_order), std::move(strides)) {
+    : Tensor(Buffer{data.data(), data.size()},
+             dtype,
+             std::move(shape),
+             std::move(dim_order),
+             std::move(strides)) {
   managed_data_ = std::move(data);
 }
 
 Tensor::Tensor(Buffer data,
-               std::vector<ea::SizesType> shape,
                ea::ScalarType dtype,
+               std::vector<ea::SizesType> shape,
                std::vector<ea::DimOrderType> dim_order,
                std::vector<ea::StridesType> strides)
     : data_(data),
       shape_(std::move(shape)),
-      dim_order_(DefaultDimOrder(shape_.size(), strides)),
-      strides_(DefaultStrides(shape_, dim_order_)),
-      impl_(dtype, shape_.size(), shape_.data(), data_.data,
-            dim_order_.data(), strides_.data(),
+      dim_order_(dim_order.empty() ? DefaultDimOrder(shape_.size(), strides)
+                                   : std::move(dim_order)),
+      strides_(strides.empty() ? DefaultStrides(shape_, dim_order_)
+                               : std::move(strides)),
+      impl_(dtype,
+            shape_.size(),
+            shape_.data(),
+            data_.data,
+            dim_order_.data(),
+            strides_.data(),
             shape_.empty() ? ea::TensorShapeDynamism::STATIC
                            : ea::TensorShapeDynamism::DYNAMIC_BOUND) {
   ET_CHECK_MSG(data_.size >= nbytes(), "Tensor size exceeds data size.");
@@ -80,8 +89,8 @@ napi_status Type<ea::Tensor>::ToNode(napi_env env,
       // The value data likely comes from inference output, which will get
       // invalided soon and we must copy it.
       std::vector<uint8_t>(data_ptr, data_ptr + value.nbytes()),
-      std::vector<ea::SizesType>(value.sizes().begin(), value.sizes().end()),
       value.dtype(),
+      std::vector<ea::SizesType>(value.sizes().begin(), value.sizes().end()),
       std::vector<ea::DimOrderType>(value.dim_order().begin(),
                                     value.dim_order().end()),
       std::vector<ea::StridesType>(value.strides().begin(),
@@ -114,20 +123,36 @@ void Type<etjs::Tensor>::Define(napi_env env,
                                 napi_value prototype) {
   DefineProperties(env, prototype,
                    Property("data", Getter(&etjs::Tensor::data)),
+                   Property("dtype", Getter(&etjs::Tensor::dtype)),
                    Property("shape", Getter(&etjs::Tensor::shape)),
                    Property("dimOrder", Getter(&etjs::Tensor::dim_order)),
                    Property("strides", Getter(&etjs::Tensor::strides)),
                    Property("size", Getter(&etjs::Tensor::size)),
                    Property("nbytes", Getter(&etjs::Tensor::nbytes)),
-                   Property("itemsize", Getter(&etjs::Tensor::itemsize)),
-                   Property("dtype", Getter(&etjs::Tensor::dtype)));
+                   Property("itemsize", Getter(&etjs::Tensor::itemsize)));
 }
 
 // static
-etjs::Tensor* Type<etjs::Tensor>::Constructor(etjs::Buffer buffer,
-                                              std::vector<ea::SizesType> shape,
-                                              ea::ScalarType dtype) {
-  return new etjs::Tensor(buffer, std::move(shape), dtype);;
+etjs::Tensor* Type<etjs::Tensor>::Constructor(
+    std::variant<etjs::Buffer, std::vector<double>> data,
+    ea::ScalarType dtype,
+    std::vector<ea::SizesType> shape) {
+  if (auto* b = std::get_if<etjs::Buffer>(&data); b)
+    return new etjs::Tensor(*b, dtype, std::move(shape));
+  // When an array of number is passed, cast elements to native type of dtype
+  // and save them into a buffer.
+  if (auto* v = std::get_if<std::vector<double>>(&data); v) {
+    std::vector<uint8_t> casted_data(v->size() * er::elementSize(dtype));
+    ET_SWITCH_REALHBBF16_TYPES(dtype, nullptr, "etjs::Tensor", CTYPE, [&] {
+      std::transform(
+          v->begin(),
+          v->end(),
+          reinterpret_cast<CTYPE*>(casted_data.data()),
+          [](double element) { return static_cast<CTYPE>(element); });
+    });
+    return new etjs::Tensor(std::move(casted_data), dtype, std::move(shape));
+  }
+  return nullptr;
 }
 
 // static

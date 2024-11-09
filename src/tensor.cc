@@ -136,11 +136,18 @@ void Type<etjs::Tensor>::Define(napi_env env,
 etjs::Tensor* Type<etjs::Tensor>::Constructor(
     std::variant<etjs::Buffer, std::vector<double>> data,
     ea::ScalarType dtype,
-    std::vector<ea::SizesType> shape) {
+    std::vector<ea::SizesType> shape,
+    std::vector<ea::DimOrderType> dim_order,
+    std::vector<ea::StridesType> strides) {
   // When a Buffer is passed, we assume the caller will keep it alive and we
   // just read its content.
-  if (auto* b = std::get_if<etjs::Buffer>(&data); b)
-    return new etjs::Tensor(*b, dtype, std::move(shape));
+  if (auto* b = std::get_if<etjs::Buffer>(&data); b) {
+    return new etjs::Tensor(*b,
+                            dtype,
+                            std::move(shape),
+                            std::move(dim_order),
+                            std::move(strides));
+  }
   // When an array of number is passed, cast elements to native type of dtype
   // and save them into a buffer.
   if (auto* v = std::get_if<std::vector<double>>(&data); v) {
@@ -152,7 +159,11 @@ etjs::Tensor* Type<etjs::Tensor>::Constructor(
           reinterpret_cast<CTYPE*>(casted_data.data()),
           [](double element) { return static_cast<CTYPE>(element); });
     });
-    return new etjs::Tensor(std::move(casted_data), dtype, std::move(shape));
+    return new etjs::Tensor(std::move(casted_data),
+                            dtype,
+                            std::move(shape),
+                            std::move(dim_order),
+                            std::move(strides));
   }
   return nullptr;
 }

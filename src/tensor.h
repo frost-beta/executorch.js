@@ -78,7 +78,9 @@ struct Type<etjs::Tensor> {
   static etjs::Tensor* Constructor(
       std::variant<etjs::Buffer, std::vector<double>> data,
       ea::ScalarType dtype,
-      std::vector<ea::SizesType> shape);
+      std::vector<ea::SizesType> shape,
+      std::vector<ea::DimOrderType> dim_order,
+      std::vector<ea::StridesType> strides);
   static void Destructor(etjs::Tensor* ptr);
 };
 

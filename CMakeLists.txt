@@ -104,10 +104,10 @@ if(TORCH_BACKEND_MPS)
 endif()
 if(TORCH_BACKEND_XNNPACK)
   target_link_libraries(${PROJECT_NAME} PRIVATE
-                        "${TORCH_LIBS}/libXNNPACK.a"
-                        "${TORCH_LIBS}/libcpuinfo.a"
-                        "${TORCH_LIBS}/libpthreadpool.a"
-                        "${TORCH_LIBS}/libmicrokernels-prod.a"
+                        "$<${TORCH_LIBS_WHOLE}/libXNNPACK.a>"
+                        "$<${TORCH_LIBS_WHOLE}/libcpuinfo.a>"
+                        "$<${TORCH_LIBS_WHOLE}/libpthreadpool.a>"
+                        "$<${TORCH_LIBS_WHOLE}/libmicrokernels-prod.a>"
                         "$<${TORCH_LIBS_WHOLE}/libxnnpack_backend.a>")
 endif()
 if(TORCH_KERNELS_OPTIMIZED)

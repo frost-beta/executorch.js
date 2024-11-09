@@ -8,7 +8,7 @@ namespace ea = executorch::aten;
 
 namespace etjs {
 
-// Intermediate type for representing typed buffer.
+// Intermediate type for representing unmanaged buffer.
 struct Buffer {
   void* data;
   size_t size;

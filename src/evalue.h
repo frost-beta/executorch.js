@@ -7,6 +7,12 @@
 
 namespace er = executorch::runtime;
 
+namespace etjs {
+
+napi_value CreateTagEnum(napi_env env);
+
+}  // namespace etjs
+
 namespace ki {
 
 template<>

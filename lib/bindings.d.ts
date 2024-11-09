@@ -12,6 +12,21 @@ declare module '*/build/Release/executorch.node' {
     BFloat16,
   }
 
+  enum Tag {
+    None,
+    Tensor,
+    String,
+    Double,
+    Int,
+    Bool,
+    ListBool,
+    ListDouble,
+    ListInt,
+    ListTensor,
+    ListScalar,
+    ListOptionalTensor,
+  }
+
   interface TensorInfo {
     sizes: number[];
     dimOrder: number[];
@@ -21,12 +36,14 @@ declare module '*/build/Release/executorch.node' {
   }
 
   interface MethodMeta {
-    name: string;
-    numInputs: number;
+    name(): string;
+    numInputs(): number;
+    inputTag(index: number): Tag | Error;
     inputTensorMeta(index: number): TensorInfo | Error;
-    numOutputs: number;
+    numOutputs(): number;
+    outputTag(index: number): Tag | Error;
     outputTensorMeta(index: number): TensorInfo | Error;
-    numMemoryPlannedBuffers: number;
+    numMemoryPlannedBuffers(): number;
     memoryPlannedBufferSize(index: number): number | Error;
   }
 

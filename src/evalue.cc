@@ -2,7 +2,43 @@
 #include "src/scalar.h"
 #include "src/tensor.h"
 
+namespace etjs {
+
+napi_value CreateTagEnum(napi_env env) {
+  napi_value obj = ki::CreateObject(env);
+#define DEFINE_ENUM(name) \
+  ki::Set(env, obj, \
+          #name, static_cast<int>(er::Tag::name), \
+          static_cast<int>(er::Tag::name), #name);
+  EXECUTORCH_FORALL_TAGS(DEFINE_ENUM)
+#undef DEFINE_ENUM
+  return obj;
+}
+
+}  // namespace etjs
+
 namespace ki {
+
+template<typename T>
+struct Type<ea::optional<T>> {
+  static constexpr const char* name = Type<T>::name;
+  static napi_status ToNode(napi_env env,
+                            const ea::optional<T>& value,
+                            napi_value* result) {
+    if (!value)
+      return napi_get_undefined(env, result);
+    return ConvertToNode(env, value.value(), result);
+  }
+  static std::optional<ea::optional<T>> FromNode(napi_env env,
+                                                 napi_value value) {
+    napi_valuetype type;
+    if (napi_typeof(env, value, &type) != napi_ok)
+      return std::nullopt;
+    if (type == napi_undefined || type == napi_null)
+      return ea::optional<T>();
+    return Type<T>::FromNode(env, value);
+  }
+};
 
 // static
 napi_status Type<er::EValue>::ToNode(napi_env env,
@@ -29,6 +65,8 @@ napi_status Type<er::EValue>::ToNode(napi_env env,
       return ConvertToNode(env, evalue.toIntList(), result);
     case er::Tag::ListTensor:
       return ConvertToNode(env, evalue.toTensorList(), result);
+    case er::Tag::ListOptionalTensor:
+      return ConvertToNode(env, evalue.toListOptionalTensor(), result);
     default:
       return napi_generic_failure;
   }

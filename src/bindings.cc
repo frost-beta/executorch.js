@@ -17,6 +17,7 @@ napi_value Init(napi_env env, napi_value exports) {
           "Scalar", ki::Class<ea::Scalar>(),
           "Tensor", ki::Class<etjs::Tensor>(),
           "ScalarType", etjs::CreateScalarTypeEnum(env),
+          "Tag", etjs::CreateTagEnum(env),
           "elementSize", &er::elementSize);
   return exports;
 }

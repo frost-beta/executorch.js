@@ -25,6 +25,11 @@ jobs:
             backend: mps
 
     steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Checkout
         uses: actions/checkout@v4
         with:

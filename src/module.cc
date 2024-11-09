@@ -100,7 +100,9 @@ void Type<ee::Module>::Define(napi_env env, napi_value, napi_value prototype) {
 // static
 ee::Module* Type<ee::Module>::Constructor(Arguments* args) {
   if (auto s = args->TryGetNext<std::string>(); s) {
-    return new ee::Module(s.value());
+    return new ee::Module(s.value(),
+                          // Some linux envs do not support mlock.
+                          ee::Module::LoadMode::MmapUseMlockIgnoreErrors);
   }
   if (auto u = args->GetNext<etjs::Buffer>(); u) {
     return new ee::Module(std::make_unique<ee::BufferDataLoader>(u->data,

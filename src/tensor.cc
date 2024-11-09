@@ -137,6 +137,8 @@ etjs::Tensor* Type<etjs::Tensor>::Constructor(
     std::variant<etjs::Buffer, std::vector<double>> data,
     ea::ScalarType dtype,
     std::vector<ea::SizesType> shape) {
+  // When a Buffer is passed, we assume the caller will keep it alive and we
+  // just read its content.
   if (auto* b = std::get_if<etjs::Buffer>(&data); b)
     return new etjs::Tensor(*b, dtype, std::move(shape));
   // When an array of number is passed, cast elements to native type of dtype
@@ -160,6 +162,8 @@ void Type<etjs::Tensor>::Destructor(etjs::Tensor* ptr) {
   // Memory is managed by TypeBridge<etjs::Tensor>::Finalize.
 }
 
+// Allow passing pointers of etjs::Tensor to JS, the code assumes we never free
+// the object in C++.
 template<>
 struct TypeBridge<etjs::Tensor> {
   static inline etjs::Tensor* Wrap(etjs::Tensor* ptr) {

@@ -4,8 +4,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "prepack": "tsc",
-    "build": "cmake-js build"
+    "prebuild": "tsc --project tsconfig.json",
+    "build": "cmake-js build",
+    "pretest": "tsc --project tests/tsconfig.json",
+    "test": "tsx tests/run.ts"
   },
   "author": "zcbenz",
   "license": "MIT",
@@ -22,8 +24,12 @@
     ]
   },
   "devDependencies": {
+    "@types/chai": "4.3.14",
+    "@types/mocha": "10.0.7",
     "@types/node": "22.5.4",
+    "chai": "4.3.7",
     "cmake-js": "7.3.0",
+    "mocha": "10.4.0",
     "tsx": "4.19.1",
     "typescript": "5.6.2"
   }

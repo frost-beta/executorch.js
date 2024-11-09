@@ -43,6 +43,9 @@ jobs:
             -p 4     \
             --CDTORCH_BACKEND_${{ steps.backend.outputs.uppercase }}=ON
 
+      - name: Test
+        run: yarn test
+
       - name: Prepare .node file
         run: cp build/Release/executorch.node executorch-${{ matrix.backend }}-${{ matrix.os }}-${{ matrix.arch }}.node
 

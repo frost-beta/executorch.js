@@ -79,9 +79,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE
                            "${torch_lib_SOURCE_DIR}/include")
 target_link_libraries(${PROJECT_NAME} PRIVATE
                       "${TORCH_LIBS}/libexecutorch_core.a"
-                      "${TORCH_LIBS}/libextension_data_loader.a"
                       "${TORCH_LIBS}/libextension_module_static.a"
-                      "$<${TORCH_LIBS_WHOLE}/libexecutorch.a>")
+                      "$<${TORCH_LIBS_WHOLE}/libexecutorch.a>"
+                      "$<${TORCH_LIBS_WHOLE}/libextension_data_loader.a>")
 if(TORCH_BACKEND_COREML)
   find_library(ACCELERATE_FRAMEWORK Accelerate)
   find_library(COREML_FRAMEWORK CoreML)

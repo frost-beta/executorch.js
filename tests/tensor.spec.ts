@@ -4,6 +4,8 @@ import {assert} from 'chai';
 describe('Tensor', () => {
   it('number scalar', () => {
     const tensor = new Tensor(8964);
+    assert.equal(tensor.item(), 8964);
+    assert.equal(tensor.tolist(), 8964);
     assert.deepEqual(Array.from(tensor.toTypedArray()), [ 8964 ]);
     assert.equal(tensor.dtype, DType.Float32);
     assert.deepEqual(tensor.shape, []);
@@ -16,6 +18,8 @@ describe('Tensor', () => {
 
   it('boolean scalar', () => {
     const tensor = new Tensor(true);
+    assert.equal(tensor.item(), true);
+    assert.equal(tensor.tolist(), true);
     assert.deepEqual(Array.from(tensor.toTypedArray()), [ 1 ]);
     assert.equal(tensor.dtype, DType.Bool);
     assert.deepEqual(tensor.shape, []);
@@ -28,6 +32,8 @@ describe('Tensor', () => {
 
   it('bfloat16 scalar', () => {
     const tensor = new Tensor(42, DType.BFloat16);
+    assert.equal(tensor.item(), 42);
+    assert.equal(tensor.tolist(), 42);
     assert.deepEqual(Array.from(tensor.data), [ 40, 66 ]);
     assert.equal(tensor.dtype, DType.BFloat16);
     assert.deepEqual(tensor.shape, []);
@@ -40,6 +46,7 @@ describe('Tensor', () => {
 
   it('nested array', () => {
     const tensor = new Tensor([ [ 1, 2, 3 ] ]);
+    assert.deepEqual(tensor.tolist(), [ [ 1, 2, 3 ] ]);
     assert.deepEqual(Array.from(tensor.toTypedArray()), [ 1, 2, 3 ]);
     assert.equal(tensor.dtype, DType.Float32);
     assert.deepEqual(tensor.shape, [ 1, 3 ]);

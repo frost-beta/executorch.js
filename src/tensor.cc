@@ -78,7 +78,76 @@ Tensor::~Tensor() = default;
 
 }  // namespace etjs
 
+namespace {
+
+// Convert the element at index in tensor to JS value.
+napi_value ElementToValue(etjs::Tensor* tensor, napi_env env, size_t index) {
+  napi_value result = nullptr;
+  ET_SWITCH_REALHBBF16_TYPES(tensor->dtype(), nullptr, "tovalue", CTYPE, [&] {
+    result = ki::ToNodeValue(env, tensor->data<CTYPE>()[index]);
+  });
+  return result;
+}
+
+// Convert the tensor to array.
+napi_value TensorToArray(etjs::Tensor* tensor,
+                         napi_env env,
+                         size_t index = 0,
+                         size_t dim = 0) {
+  napi_value ret;
+  if (napi_create_array_with_length(env, tensor->shape()[dim], &ret) != napi_ok)
+    return nullptr;
+  for (size_t i = 0; i < tensor->shape()[dim]; ++i) {
+    if (dim == tensor->ndim() - 1) {
+      // The last dimension only has scalars.
+      napi_set_element(env, ret, i, ElementToValue(tensor, env, index));
+    } else {
+      napi_set_element(env, ret, i, TensorToArray(tensor, env, index, dim + 1));
+    }
+    index += tensor->strides()[dim];
+  }
+  return ret;
+}
+
+// Convert the tensor to scalar.
+napi_value Item(etjs::Tensor* tensor, napi_env env) {
+  if (tensor->size() != 1) {
+    ki::ThrowError(env, "item() can only be called on tensors of size 1.");
+    return nullptr;
+  }
+  return ElementToValue(tensor, env, 0);
+}
+
+// Convert the tensor to scalar or nested array.
+napi_value ToList(etjs::Tensor* tensor, napi_env env) {
+  if (tensor->ndim() == 0)
+    return Item(tensor, env);
+  return TensorToArray(tensor, env);
+}
+
+}  // namespace
+
 namespace ki {
+
+template<>
+struct Type<er::etensor::Half> {
+  static constexpr const char* name = "Float16";
+  static napi_status ToNode(napi_env env,
+                            er::etensor::Half value,
+                            napi_value* result) {
+    return ConvertToNode(env, static_cast<float>(value), result);
+  }
+};
+
+template<>
+struct Type<er::etensor::BFloat16> {
+  static constexpr const char* name = "BFloat16";
+  static napi_status ToNode(napi_env env,
+                            er::etensor::BFloat16 value,
+                            napi_value* result) {
+    return ConvertToNode(env, static_cast<float>(value), result);
+  }
+};
 
 // static
 napi_status Type<ea::Tensor>::ToNode(napi_env env,
@@ -122,7 +191,7 @@ void Type<etjs::Tensor>::Define(napi_env env,
                                 napi_value constructor,
                                 napi_value prototype) {
   DefineProperties(env, prototype,
-                   Property("data", Getter(&etjs::Tensor::data)),
+                   Property("data", Getter(&etjs::Tensor::buffer)),
                    Property("dtype", Getter(&etjs::Tensor::dtype)),
                    Property("shape", Getter(&etjs::Tensor::shape)),
                    Property("dimOrder", Getter(&etjs::Tensor::dim_order)),
@@ -130,6 +199,9 @@ void Type<etjs::Tensor>::Define(napi_env env,
                    Property("size", Getter(&etjs::Tensor::size)),
                    Property("nbytes", Getter(&etjs::Tensor::nbytes)),
                    Property("itemsize", Getter(&etjs::Tensor::itemsize)));
+  Set(env, prototype,
+      "item", MemberFunction(&Item),
+      "tolist", MemberFunction(&ToList));
 }
 
 // static

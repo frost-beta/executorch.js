@@ -1,3 +1,5 @@
+type Nested<T> = Nested<T>[] | T;
+
 declare module '*/build/Release/executorch.node' {
   enum ScalarType {
     Byte,
@@ -57,6 +59,8 @@ declare module '*/build/Release/executorch.node' {
 
   class Tensor {
     constructor(data: Uint8Array | number[], dtype: number, shape: number[], dimOrder: number[], strides: number[]);
+    item(): number | boolean;
+    tolist(): Nested<number | boolean>;
     get data(): Uint8Array;
     get dtype(): number;
     get shape(): number[];

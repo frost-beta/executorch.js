@@ -71,6 +71,20 @@ export class Tensor {
   }
 
   /**
+   * Return the tensor as a scalar.
+   */
+  item(): number | boolean {
+    return this.#holder.item();
+  }
+
+  /**
+   * Return the tensor as a scalar or (nested) Array.
+   */
+  tolist(): Nested<number | boolean> {
+    return this.#holder.tolist();
+  }
+
+  /**
    * Return a TypedArray view of tensor's data.
    */
   toTypedArray() {

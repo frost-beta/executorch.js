@@ -31,14 +31,18 @@ class Tensor {
 
   ea::TensorImpl* impl() { return &impl_; }
 
-  const Buffer& data() const { return data_; }
+  const Buffer& buffer() const { return data_; }
   ea::ScalarType dtype() const { return impl_.dtype(); }
   const std::vector<ea::SizesType>& shape() const { return shape_; }
   const std::vector<ea::DimOrderType>& dim_order() const { return dim_order_; }
   const std::vector<ea::StridesType>& strides() const { return strides_; }
+  size_t ndim() const { return shape().size(); }
   size_t size() const { return impl_.numel(); }
   size_t nbytes() const { return impl_.nbytes(); }
   size_t itemsize() const { return impl_.element_size(); }
+
+  template<typename T>
+  const T* data() const { return static_cast<const T*>(data_.data); }
 
  private:
   Buffer data_;

@@ -55,6 +55,7 @@ declare module '*/build/Release/executorch.node' {
     isLoaded(): boolean;
     methodNames(): string[];
     methodMeta(name: string): MethodMeta | Error;
+    execute(name: string, args: unknown[]): unknown[] | Error;
   }
 
   class Tensor {

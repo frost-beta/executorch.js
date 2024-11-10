@@ -168,6 +168,15 @@ napi_status Type<ea::Tensor>::ToNode(napi_env env,
 }
 
 // static
+std::optional<ea::Tensor> Type<ea::Tensor>::FromNode(napi_env env,
+                                                     napi_value value) {
+  etjs::Tensor* tensor;
+  if (!Get(env, value, "holder", &tensor))
+    return std::nullopt;
+  return ea::Tensor(tensor->impl());
+}
+
+// static
 napi_status Type<etjs::Buffer>::ToNode(napi_env env,
                                        const etjs::Buffer& value,
                                        napi_value* result) {

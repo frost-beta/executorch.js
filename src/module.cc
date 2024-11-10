@@ -7,6 +7,71 @@
 #include "src/scalar.h"
 #include "src/tensor.h"
 
+namespace {
+
+// According to MethodMeta::input_tag/output_tag, these are the types we only
+// need to support
+using EValueVariant = std::variant<ea::Tensor, std::string, double, bool>;
+
+er::Result<std::vector<er::EValue>> Execute(
+    ee::Module* mod,
+    napi_env env,
+    const std::string& name,
+    const std::vector<EValueVariant>& args) {
+  auto meta = mod->method_meta(name);
+  if (!meta.ok()) {
+    ki::ThrowError(env, "The method (\"", name,
+                        "\") to execute does not exist.");
+    return er::Error::NotFound;
+  }
+  if (meta->num_inputs() != args.size()) {
+    ki::ThrowError(env, "Expect ", meta->num_inputs(), " args but only got ",
+                        args.size(), ".");
+    return er::Error::InvalidArgument;
+  }
+  std::vector<er::EValue> inputs;
+  for (size_t i = 0; i < args.size(); ++i) {
+    er::Tag tag = meta->input_tag(i).get();
+    switch (tag) {
+      case er::Tag::Tensor:
+        if (auto* t = std::get_if<ea::Tensor>(&args[i]); t) {
+          inputs.push_back(er::EValue(std::move(*t)));
+          break;
+        }
+        ki::ThrowError(env, "Argument ", i, " should be Tensor.");
+        return er::Error::InvalidArgument;
+      case er::Tag::String:
+        if (auto* s = std::get_if<std::string>(&args[i]); s) {
+          inputs.push_back(er::EValue(s->c_str(), s->size()));
+          break;
+        }
+        ki::ThrowError(env, "Argument ", i, " should be String.");
+        return er::Error::InvalidArgument;
+      case er::Tag::Int:
+        if (auto* d = std::get_if<double>(&args[i]); d) {
+          inputs.push_back(er::EValue(static_cast<int64_t>(*d)));
+          break;
+        }
+        ki::ThrowError(env, "Argument ", i, " should be integer.");
+        return er::Error::InvalidArgument;
+      case er::Tag::Double:
+        if (auto* d = std::get_if<double>(&args[i]); d) {
+          inputs.push_back(er::EValue(*d));
+          break;
+        }
+        ki::ThrowError(env, "Argument ", i, " should be number.");
+        return er::Error::InvalidArgument;
+      default:
+        ki::ThrowError(env, "Unexpected EValue tag ", static_cast<int>(tag),
+                            ", did ExecuTorch API changed?");
+        return er::Error::NotImplemented;
+    }
+  }
+  return mod->execute(name, inputs);
+}
+
+}  // namespace
+
 namespace ki {
 
 template<>
@@ -90,11 +155,7 @@ void Type<ee::Module>::Define(napi_env env, napi_value, napi_value prototype) {
       "loadMethod", &ee::Module::load_method,
       "isMethodLoaded", &ee::Module::is_method_loaded,
       "methodMeta", &ee::Module::method_meta,
-      "execute", static_cast<er::Result<std::vector<er::EValue>>
-                                 (ee::Module::*)(
-                                      const std::string&,
-                                      const std::vector<er::EValue>&)>(
-                                           &ee::Module::execute));
+      "execute", MemberFunction(&Execute));
 }
 
 // static

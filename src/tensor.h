@@ -64,6 +64,7 @@ struct Type<ea::Tensor> {
   static napi_status ToNode(napi_env env,
                             const ea::Tensor& value,
                             napi_value* result);
+  static std::optional<ea::Tensor> FromNode(napi_env env, napi_value value);
 };
 
 template<>

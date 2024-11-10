@@ -5,24 +5,17 @@ import {Tensor} from './tensor.js';
 /**
  * The supported types for conversions between C++ and JavaScript.
  */
-export type EValue = Tensor | number | boolean | null;
+export type EValue = Tensor | string | number | boolean;
 
 /**
  * Enum representing EValue types.
  */
 export enum EValueTag {
-  None               = bindings.Tag.None,
-  Tensor             = bindings.Tag.Tensor,
-  String             = bindings.Tag.String,
-  Double             = bindings.Tag.Double,
-  Int                = bindings.Tag.Int,
-  Bool               = bindings.Tag.Bool,
-  ListBool           = bindings.Tag.ListBool,
-  ListDouble         = bindings.Tag.ListDouble,
-  ListInt            = bindings.Tag.ListInt,
-  ListTensor         = bindings.Tag.ListTensor,
-  ListScalar         = bindings.Tag.ListScalar,
-  ListOptionalTensor = bindings.Tag.ListOptionalTensor,
+  Tensor = bindings.Tag.Tensor,
+  String = bindings.Tag.String,
+  Double = bindings.Tag.Double,
+  Int    = bindings.Tag.Int,
+  Bool   = bindings.Tag.Bool,
 }
 
 /**
@@ -43,7 +36,7 @@ export class Module {
   /**
    * The methods of this class are dynamically loaded.
    */
-  [key: string]: Function | undefined;
+  [key: string]: Function;
 
   // Internal binding to the executorch::extension::Module instance.
   readonly #mod: bindings.Module;
@@ -60,10 +53,21 @@ export class Module {
   /**
    * Load the model.
    */
-  load() {
+  loadSync() {
     const error = this.#mod.load('minimal');
     if (error)
       throw error;
+    for (const name of this.getMethodNames()) {
+      this[name] = function(...args: EValue[]) {
+        const outputs = this.#mod.execute(name, args);
+        if (outputs instanceof Error)
+          throw outputs;
+        if (outputs.length == 1)
+          return outputs[0];
+        else
+          return outputs;
+      }
+    }
   }
 
   /**
@@ -74,11 +78,17 @@ export class Module {
   }
 
   /**
+   * Return names of loaded model's methods.
+   */
+  getMethodNames() {
+    return this.#mod.methodNames();
+  }
+
+  /**
    * Return information about the methods in the model.
    */
   getMethods() {
-    const names = this.#mod.methodNames();
-    return names.map((name) => {
+    return this.getMethodNames().map((name) => {
       const meta = this.#mod.methodMeta(name);
       if (meta instanceof Error)
         throw meta;

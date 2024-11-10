@@ -5,6 +5,7 @@
 #include <executorch/runtime/core/span.h>
 #include <kizunapi.h>
 
+namespace ea = executorch::aten;
 namespace er = executorch::runtime;
 
 namespace etjs {
@@ -14,6 +15,27 @@ napi_value CreateTagEnum(napi_env env);
 }  // namespace etjs
 
 namespace ki {
+
+template<typename T>
+struct Type<ea::optional<T>> {
+  static constexpr const char* name = Type<T>::name;
+  static napi_status ToNode(napi_env env,
+                            const ea::optional<T>& value,
+                            napi_value* result) {
+    if (!value)
+      return napi_get_undefined(env, result);
+    return ConvertToNode(env, value.value(), result);
+  }
+  static std::optional<ea::optional<T>> FromNode(napi_env env,
+                                                 napi_value value) {
+    napi_valuetype type;
+    if (napi_typeof(env, value, &type) != napi_ok)
+      return std::nullopt;
+    if (type == napi_undefined || type == napi_null)
+      return ea::optional<T>();
+    return Type<T>::FromNode(env, value);
+  }
+};
 
 template<>
 struct Type<er::Tag> {
@@ -50,8 +72,6 @@ struct Type<er::EValue> {
   static napi_status ToNode(napi_env env,
                             const er::EValue& value,
                             napi_value* result);
-  static std::optional<er::EValue> FromNode(napi_env env,
-                                            napi_value value);
 };
 
 }  // namespace ki

@@ -30,7 +30,7 @@ export class Tensor {
   readonly shape: number[];
 
   // Internal binding to the executorch::aten::Tensor instance.
-  readonly #holder: bindings.Tensor;
+  private readonly holder: bindings.Tensor;
 
   /**
    * @param input - A scalar, or a (nested) Array, or a Uint8Array buffer.
@@ -52,7 +52,7 @@ export class Tensor {
       this.dtype = dtype;
       this.shape = shape;
       this.data = input;
-      this.#holder = new bindings.Tensor(this.data, this.dtype, this.shape, dimOrder, strides);
+      this.holder = new bindings.Tensor(this.data, this.dtype, this.shape, dimOrder, strides);
     } else {
       // Create from JavaScript array or scalar.
       this.dtype = dtype ?? getInputDType(input);
@@ -62,11 +62,11 @@ export class Tensor {
         flatData = flatData.map(f => Number(f));
       if (shape && flatData.length < getSizeFromShape(shape))
         throw new Error('The input has less data than set by passed shape.');
-      this.#holder = new bindings.Tensor(flatData as number[], this.dtype, this.shape, dimOrder, strides);
+      this.holder = new bindings.Tensor(flatData as number[], this.dtype, this.shape, dimOrder, strides);
       // Get a view of internal buffer.
-      this.data = this.#holder.data;
+      this.data = this.holder.data;
       // Make sure the data is destroyed after holder.
-      Object.defineProperty(this.data, 'holder', {enumerable: false, value: this.#holder});
+      Object.defineProperty(this.data, 'holder', {enumerable: false, value: this.holder});
     }
   }
 
@@ -74,14 +74,14 @@ export class Tensor {
    * Return the tensor as a scalar.
    */
   item(): number | boolean {
-    return this.#holder.item();
+    return this.holder.item();
   }
 
   /**
    * Return the tensor as a scalar or (nested) Array.
    */
   tolist(): Nested<number | boolean> {
-    return this.#holder.tolist();
+    return this.holder.tolist();
   }
 
   /**
@@ -96,14 +96,14 @@ export class Tensor {
    * A permutation of the dimensions, from the outermost to the innermost one.
    */
   get dimOrder(): number[] {
-    return this.#holder.dimOrder;
+    return this.holder.dimOrder;
   }
 
   /**
    * Array of indices to step in each dimension when traversing the tensor.
    */
   get strides(): number[] {
-    return this.#holder.strides;
+    return this.holder.strides;
   }
 
   /**
@@ -117,21 +117,21 @@ export class Tensor {
    * Number of elements in the tensor.
    */
   get size(): number {
-    return this.#holder.size;
+    return this.holder.size;
   }
 
   /**
    * Total bytes consumed by the elements of the tensor.
    */
   get nbytes(): number {
-    return this.#holder.nbytes;
+    return this.holder.nbytes;
   }
 
   /**
    * Length of one tensor element in bytes.
    */
   get itemsize(): number {
-    return this.#holder.itemsize;
+    return this.holder.itemsize;
   }
 }
 

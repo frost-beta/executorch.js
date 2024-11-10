@@ -6,7 +6,7 @@
   "scripts": {
     "prebuild": "tsc --project tsconfig.json",
     "build": "cmake-js build",
-    "pretest": "tsc --project tests/tsconfig.json",
+    "pretest": "tsc --project tests/tsconfig.json --noEmit",
     "test": "tsx tests/run.ts"
   },
   "author": "zcbenz",

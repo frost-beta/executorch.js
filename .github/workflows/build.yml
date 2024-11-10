@@ -50,7 +50,14 @@ jobs:
             --CDTORCH_BACKEND_${{ steps.backend.outputs.uppercase }}=ON
 
       - name: Test
+        id: test
         run: yarn test
+
+      - name: Get Stack Trace
+        run: |
+          yarn tsc --project tests/tsconfig.json
+          lldb -b -o run -k 'thread backtrace all' node dist/run.js
+        if: failure() && matrix.os != 'win' && steps.test.outcome == 'failure'
 
       - name: Release build
         run: |

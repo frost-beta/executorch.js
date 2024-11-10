@@ -6,7 +6,7 @@ import {pipeline} from 'node:stream/promises';
 // Add files.
 const mocha = new Mocha();
 for (const f of fs.readdirSync(__dirname)) {
-  if (f.endsWith('.spec.ts'))
+  if (f.endsWith('.spec.ts') || f.endsWith('.spec.js'))
     mocha.addFile(`${__dirname}/${f}`);
 }
 

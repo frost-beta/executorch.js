@@ -52,7 +52,10 @@ target_sources(${PROJECT_NAME} PRIVATE ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME} PUBLIC ".")
 
 # Use kizunapi.
-target_include_directories(${PROJECT_NAME} PRIVATE "deps/kizunapi")
+FetchContent_Declare(kizunapi GIT_REPOSITORY https://github.com/yue/kizunapi.git
+                              GIT_TAG 4c59c84e6dd1d2da260b257adf1bd8c5244fde32)
+FetchContent_MakeAvailable(kizunapi)
+target_include_directories(${PROJECT_NAME} PRIVATE "${kizunapi_SOURCE_DIR}")
 
 # Download the executorch binaries.
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

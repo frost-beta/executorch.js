@@ -83,6 +83,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
                       "$<${TORCH_LIBS_WHOLE}/libexecutorch.a>"
                       "$<${TORCH_LIBS_WHOLE}/libextension_data_loader.a>")
 if(TORCH_BACKEND_COREML)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE ETJS_BACKEND_COREML)
   find_library(ACCELERATE_FRAMEWORK Accelerate)
   find_library(COREML_FRAMEWORK CoreML)
   target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -91,6 +92,7 @@ if(TORCH_BACKEND_COREML)
                         "$<${TORCH_LIBS_WHOLE}/libcoremldelegate.a>")
 endif()
 if(TORCH_BACKEND_MPS)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE ETJS_BACKEND_MPS)
   find_library(FOUNDATION_FRAMEWORK Foundation)
   find_library(METAL_FRAMEWORK Metal)
   find_library(MPS_FRAMEWORK MetalPerformanceShaders)
@@ -103,6 +105,7 @@ if(TORCH_BACKEND_MPS)
                         "$<${TORCH_LIBS_WHOLE}/libmpsdelegate.a>")
 endif()
 if(TORCH_BACKEND_XNNPACK)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE ETJS_BACKEND_XNNPACK)
   target_link_libraries(${PROJECT_NAME} PRIVATE
                         "$<${TORCH_LIBS_WHOLE}/libXNNPACK.a>"
                         "$<${TORCH_LIBS_WHOLE}/libcpuinfo.a>"

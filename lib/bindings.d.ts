@@ -72,5 +72,13 @@ declare module '*/build/Release/executorch.node' {
     get itemsize(): number;
   }
 
+  interface Backends {
+    coreml: boolean;
+    mps: boolean;
+    xnnpack: boolean;
+  }
+
+  const backends: Backends;
+
   function elementSize(dtype: number): number;
 }

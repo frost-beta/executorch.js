@@ -1,4 +1,4 @@
-import * as bindings from '../build/Release/executorch.node';
+import bindings from '../build/Release/executorch.node';
 import {DType} from './scalar.js';
 
 type Nested<T> = Nested<T>[] | T;

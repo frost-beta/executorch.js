@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import {DType, Module, Tensor, backends} from '..';
+import {DType, Module, Tensor, backends, config} from '..';
 import {assert} from 'chai';
 
 const fixtures = `${__dirname}/fixtures`;
@@ -26,7 +26,7 @@ describe('Module', () => {
     if (!enabled)
       continue;
     it(`${name} backend`, function () {
-      this.timeout(10 * 1000);
+      this.timeout((config == 'Debug' ? 20 : 10) * 1000);
       const mod = new Module(`${fixtures}/${models[name]}`);
       mod.loadSync();
       const {shape} = mod.getMethods()[0].inputs[0];

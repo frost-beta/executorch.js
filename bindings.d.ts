@@ -80,4 +80,6 @@ export interface Backends {
 
 export const backends: Backends;
 
+export const config: 'Debug' | 'Release';
+
 export function elementSize(dtype: number): number;

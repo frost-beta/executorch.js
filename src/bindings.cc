@@ -37,6 +37,11 @@ napi_value Init(napi_env env, napi_value exports) {
           "ScalarType", etjs::CreateScalarTypeEnum(env),
           "Tag", etjs::CreateTagEnum(env),
           "backends", backends,
+#if defined(ETJS_DEBUG_BUILD)
+          "config", "Debug",
+#else
+          "config", "Release",
+#endif
           "elementSize", &er::elementSize);
   return exports;
 }

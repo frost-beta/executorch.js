@@ -1,4 +1,4 @@
-import bindings from '../build/Release/executorch.node';
+import bindings from '../bindings.js';
 
 export enum DType {
   UInt8    = bindings.ScalarType.Byte,

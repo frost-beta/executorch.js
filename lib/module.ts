@@ -1,4 +1,4 @@
-import bindings from '../build/Release/executorch.node';
+import bindings from '../bindings.js';
 import {DType} from './scalar.js';
 import {Tensor} from './tensor.js';
 
@@ -8,21 +8,10 @@ import {Tensor} from './tensor.js';
 export type EValue = Tensor | string | number | boolean;
 
 /**
- * Enum representing EValue types.
- */
-export enum EValueTag {
-  Tensor = bindings.Tag.Tensor,
-  String = bindings.Tag.String,
-  Double = bindings.Tag.Double,
-  Int    = bindings.Tag.Int,
-  Bool   = bindings.Tag.Bool,
-}
-
-/**
  * Detailed information about an EValue.
  */
 export interface EValueInfo {
-  tag: EValueTag;
+  tag: bindings.Tag;
   dtype?: DType;
   shape?: number[];
   dimOrder?: number[];
@@ -109,7 +98,7 @@ function parseEValueInfo(tag: bindings.Tag | Error,
     throw tag;
   if (info instanceof Error)
     throw info;
-  const result = {tag: tag as unknown as EValueTag};
+  const result = {tag: tag as unknown as bindings.Tag};
   if (tag != bindings.Tag.Tensor)
     return result;
   return {

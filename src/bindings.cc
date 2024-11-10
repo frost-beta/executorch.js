@@ -13,15 +13,23 @@ namespace {
 napi_value Init(napi_env env, napi_value exports) {
   er::runtime_init();
   napi_value backends = ki::CreateObject(env);
+  ki::Set(env, backends,
 #if defined(ETJS_BACKEND_COREML)
-  ki::Set(env, backends, "coreml", true);
+          "coreml", true,
+#else
+          "coreml", false,
 #endif
 #if defined(ETJS_BACKEND_MPS)
-  ki::Set(env, backends, "mps", true);
+          "mps", true,
+#else
+          "mps", false,
 #endif
 #if defined(ETJS_BACKEND_XNNPACK)
-  ki::Set(env, backends, "xnnpack", true);
+          "xnnpack", true,
+#else
+          "xnnpack", false,
 #endif
+          "cpu", true);
   ki::Set(env, exports,
           "Module", ki::Class<ee::Module>(),
           "Scalar", ki::Class<ea::Scalar>(),

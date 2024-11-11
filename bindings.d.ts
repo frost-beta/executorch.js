@@ -50,11 +50,12 @@ export interface MethodMeta {
 
 export class Module {
   constructor(filePathOrBuffer: string | Uint8Array);
-  load(verification: 'minimal' | 'internal-consistency'): Error;
+  loadSync(verification: 'minimal' | 'internal-consistency'): Error;
   isLoaded(): boolean;
   methodNames(): string[];
   methodMeta(name: string): MethodMeta | Error;
-  execute(name: string, args: unknown[]): unknown[] | Error;
+  execute(name: string, args: unknown[]): Promise<unknown[] | string | Error>;
+  executeSync(name: string, args: unknown[]): unknown[] | string | Error;
 }
 
 export class Tensor {

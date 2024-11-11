@@ -43,19 +43,16 @@ export class Module {
    * Load the model.
    */
   loadSync() {
-    const error = this.#mod.load('minimal');
+    const error = this.#mod.loadSync('minimal');
     if (error)
       throw error;
     for (const name of this.getMethodNames()) {
-      this[name] = function(...args: EValue[]) {
-        const outputs = this.#mod.execute(name, args);
-        if (outputs instanceof Error)
-          throw outputs;
-        if (outputs.length == 1)
-          return outputs[0];
-        else
-          return outputs;
-      }
+      this[name] = async function(...args: EValue[]) {
+        return executionResult(await this.#mod.execute(name, args));
+      };
+      this[name + 'Sync'] = function(...args: EValue[]) {
+        return executionResult(this.#mod.executeSync(name, args));
+      };
     }
   }
 
@@ -90,6 +87,17 @@ export class Module {
       return {name, inputs, outputs};
     });
   }
+}
+
+function executionResult(result: unknown[] | string | Error) {
+  if (result instanceof Error)
+    throw result;
+  if (typeof result == 'string')
+    throw new Error(result);
+  if (result.length == 1)
+    return result[0];
+  else
+    return result;
 }
 
 function parseEValueInfo(tag: bindings.Tag | Error,

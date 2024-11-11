@@ -1,11 +1,14 @@
 #include "src/module.h"
 
+#include <format>
+
 #include <executorch/extension/data_loader/buffer_data_loader.h>
 
 #include "src/evalue.h"
 #include "src/error.h"
 #include "src/scalar.h"
 #include "src/tensor.h"
+#include "src/worker.h"
 
 namespace {
 
@@ -13,22 +16,16 @@ namespace {
 // need to support
 using EValueVariant = std::variant<ea::Tensor, std::string, double, bool>;
 
-er::Result<std::vector<er::EValue>> Execute(
-    ee::Module* mod,
-    napi_env env,
-    const std::string& name,
-    const std::vector<EValueVariant>& args) {
+std::variant<std::string, er::Result<std::vector<er::EValue>>>
+ExecuteImpl(ee::Module* mod,
+            const std::string& name,
+            const std::vector<EValueVariant>& args) {
   auto meta = mod->method_meta(name);
-  if (!meta.ok()) {
-    ki::ThrowError(env, "The method (\"", name,
-                        "\") to execute does not exist.");
-    return er::Error::NotFound;
-  }
-  if (meta->num_inputs() != args.size()) {
-    ki::ThrowError(env, "Expect ", meta->num_inputs(), " args but only got ",
-                        args.size(), ".");
-    return er::Error::InvalidArgument;
-  }
+  if (!meta.ok())
+    return std::format("Method \"{}\" does not exist.", name);
+  if (meta->num_inputs() != args.size())
+    return std::format("Expect {} arg(s) but only got {}.",
+                       meta->num_inputs(), args.size());
   std::vector<er::EValue> inputs;
   for (size_t i = 0; i < args.size(); ++i) {
     er::Tag tag = meta->input_tag(i).get();
@@ -38,36 +35,49 @@ er::Result<std::vector<er::EValue>> Execute(
           inputs.push_back(er::EValue(std::move(*t)));
           break;
         }
-        ki::ThrowError(env, "Argument ", i, " should be Tensor.");
-        return er::Error::InvalidArgument;
+        return std::format("Argument {} should be Tensor.", i);
       case er::Tag::String:
         if (auto* s = std::get_if<std::string>(&args[i]); s) {
           inputs.push_back(er::EValue(s->c_str(), s->size()));
           break;
         }
-        ki::ThrowError(env, "Argument ", i, " should be String.");
-        return er::Error::InvalidArgument;
+        return std::format("Argument {} should be String.", i);
       case er::Tag::Int:
         if (auto* d = std::get_if<double>(&args[i]); d) {
           inputs.push_back(er::EValue(static_cast<int64_t>(*d)));
           break;
         }
-        ki::ThrowError(env, "Argument ", i, " should be integer.");
-        return er::Error::InvalidArgument;
+        return std::format("Argument {} should be interger.", i);
       case er::Tag::Double:
         if (auto* d = std::get_if<double>(&args[i]); d) {
           inputs.push_back(er::EValue(*d));
           break;
         }
-        ki::ThrowError(env, "Argument ", i, " should be number.");
-        return er::Error::InvalidArgument;
+        return std::format("Argument {} should be number.", i);
       default:
-        ki::ThrowError(env, "Unexpected EValue tag ", static_cast<int>(tag),
-                            ", did ExecuTorch API changed?");
-        return er::Error::NotImplemented;
+        return std::format("Unexpected EValue tag {}.", static_cast<int>(tag));
     }
   }
   return mod->execute(name, inputs);
+}
+
+napi_value Execute(ee::Module* mod,
+                   napi_env env,
+                   std::string name,
+                   std::vector<EValueVariant> args) {
+  return etjs::RunInWorker<decltype(ExecuteImpl(mod, name, args))>(
+      env,
+      "execute",
+      [mod, name = std::move(name), args = std::move(args)]() {
+        return ExecuteImpl(mod, name, args);
+      });
+}
+
+napi_value ExecuteSync(ee::Module* mod,
+                       napi_env env,
+                       const std::string& name,
+                       const std::vector<EValueVariant>& args) {
+  return ki::ToNodeValue(env, ExecuteImpl(mod, name, args));
 }
 
 }  // namespace
@@ -149,13 +159,14 @@ struct Type<er::MethodMeta> : public AllowPassByValue<er::MethodMeta> {
 // static
 void Type<ee::Module>::Define(napi_env env, napi_value, napi_value prototype) {
   Set(env, prototype,
-      "load", &ee::Module::load,
+      "loadSync", &ee::Module::load,
       "isLoaded", &ee::Module::is_loaded,
       "methodNames", &ee::Module::method_names,
       "loadMethod", &ee::Module::load_method,
       "isMethodLoaded", &ee::Module::is_method_loaded,
       "methodMeta", &ee::Module::method_meta,
-      "execute", MemberFunction(&Execute));
+      "execute", MemberFunction(&Execute),
+      "executeSync", MemberFunction(&ExecuteSync));
 }
 
 // static

@@ -25,13 +25,13 @@ describe('Module', () => {
   for (const [ name, enabled ] of Object.entries(backends)) {
     if (!enabled)
       continue;
-    it(`${name} backend`, function () {
+    it(`${name} backend`, async function () {
       this.timeout((config == 'Debug' ? 20 : 10) * 1000);
       const mod = new Module(`${fixtures}/${models[name]}`);
       mod.loadSync();
       const {shape} = mod.getMethods()[0].inputs[0];
-      const input = new Tensor(Buffer.alloc(4 * getSizeFromShape(shape!), 1), DType.Float32, {shape});
-      const output = mod.forward(input);
+      const input = new Tensor(Buffer.alloc(4 * getSizeFromShape(shape!)), DType.Float32, {shape});
+      const output = await mod.forward(input);
       assert.deepEqual(output.shape, [ 1, 1000 ]);
     });
   }

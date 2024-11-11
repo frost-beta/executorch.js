@@ -11,8 +11,8 @@ cmake_policy(SET CMP0042 NEW)
 
 # Define project name.
 project(executorch.js)
-# Use C++17.
-set(CMAKE_CXX_STANDARD 17)
+# Use C++20.
+set(CMAKE_CXX_STANDARD 20)
 
 # ----------------------------- Config ---------------------------------
 

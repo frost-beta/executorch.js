@@ -80,6 +80,17 @@ napi_value ExecuteSync(ee::Module* mod,
   return ki::ToNodeValue(env, ExecuteImpl(mod, name, args));
 }
 
+napi_value Load(ee::Module* mod,
+                napi_env env,
+                er::Program::Verification verification) {
+  return etjs::RunInWorker<decltype(mod->load())>(
+      env,
+      "load",
+      [mod, verification]() {
+        return mod->load(verification);
+      });
+}
+
 }  // namespace
 
 namespace ki {
@@ -159,6 +170,7 @@ struct Type<er::MethodMeta> : public AllowPassByValue<er::MethodMeta> {
 // static
 void Type<ee::Module>::Define(napi_env env, napi_value, napi_value prototype) {
   Set(env, prototype,
+      "load", MemberFunction(&Load),
       "loadSync", &ee::Module::load,
       "isLoaded", &ee::Module::is_loaded,
       "methodNames", &ee::Module::method_names,

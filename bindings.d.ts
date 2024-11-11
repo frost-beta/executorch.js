@@ -50,7 +50,8 @@ export interface MethodMeta {
 
 export class Module {
   constructor(filePathOrBuffer: string | Uint8Array);
-  loadSync(verification: 'minimal' | 'internal-consistency'): Error;
+  load(verification: 'minimal' | 'internal-consistency'): Promise<undefined | Error>;
+  loadSync(verification: 'minimal' | 'internal-consistency'): undefined | Error;
   isLoaded(): boolean;
   methodNames(): string[];
   methodMeta(name: string): MethodMeta | Error;

@@ -42,18 +42,21 @@ export class Module {
   /**
    * Load the model.
    */
+  async load() {
+    const error = await this.#mod.load('minimal');
+    if (error)
+      throw error;
+    this.#populateMethods();
+  }
+
+  /**
+   * Load the model synchronously.
+   */
   loadSync() {
     const error = this.#mod.loadSync('minimal');
     if (error)
       throw error;
-    for (const name of this.getMethodNames()) {
-      this[name] = async function(...args: EValue[]) {
-        return executionResult(await this.#mod.execute(name, args));
-      };
-      this[name + 'Sync'] = function(...args: EValue[]) {
-        return executionResult(this.#mod.executeSync(name, args));
-      };
-    }
+    this.#populateMethods();
   }
 
   /**
@@ -86,6 +89,17 @@ export class Module {
         outputs.push(parseEValueInfo(meta.outputTag(i), meta.outputTensorMeta(i)));
       return {name, inputs, outputs};
     });
+  }
+
+  #populateMethods() {
+    for (const name of this.getMethodNames()) {
+      this[name] = async function(...args: EValue[]) {
+        return executionResult(await this.#mod.execute(name, args));
+      };
+      this[name + 'Sync'] = function(...args: EValue[]) {
+        return executionResult(this.#mod.executeSync(name, args));
+      };
+    }
   }
 }
 

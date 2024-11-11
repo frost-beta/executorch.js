@@ -1,8 +1,8 @@
 #include "src/module.h"
 
-#include <format>
-
 #include <executorch/extension/data_loader/buffer_data_loader.h>
+#define FMT_HEADER_ONLY
+#include <fmt/format.h>
 
 #include "src/evalue.h"
 #include "src/error.h"
@@ -22,9 +22,9 @@ ExecuteImpl(ee::Module* mod,
             const std::vector<EValueVariant>& args) {
   auto meta = mod->method_meta(name);
   if (!meta.ok())
-    return std::format("Method \"{}\" does not exist.", name);
+    return fmt::format("Method \"{}\" does not exist.", name);
   if (meta->num_inputs() != args.size())
-    return std::format("Expect {} arg(s) but only got {}.",
+    return fmt::format("Expect {} arg(s) but only got {}.",
                        meta->num_inputs(), args.size());
   std::vector<er::EValue> inputs;
   for (size_t i = 0; i < args.size(); ++i) {
@@ -35,27 +35,27 @@ ExecuteImpl(ee::Module* mod,
           inputs.push_back(er::EValue(std::move(*t)));
           break;
         }
-        return std::format("Argument {} should be Tensor.", i);
+        return fmt::format("Argument {} should be Tensor.", i);
       case er::Tag::String:
         if (auto* s = std::get_if<std::string>(&args[i]); s) {
           inputs.push_back(er::EValue(s->c_str(), s->size()));
           break;
         }
-        return std::format("Argument {} should be String.", i);
+        return fmt::format("Argument {} should be String.", i);
       case er::Tag::Int:
         if (auto* d = std::get_if<double>(&args[i]); d) {
           inputs.push_back(er::EValue(static_cast<int64_t>(*d)));
           break;
         }
-        return std::format("Argument {} should be interger.", i);
+        return fmt::format("Argument {} should be interger.", i);
       case er::Tag::Double:
         if (auto* d = std::get_if<double>(&args[i]); d) {
           inputs.push_back(er::EValue(*d));
           break;
         }
-        return std::format("Argument {} should be number.", i);
+        return fmt::format("Argument {} should be number.", i);
       default:
-        return std::format("Unexpected EValue tag {}.", static_cast<int>(tag));
+        return fmt::format("Unexpected EValue tag {}.", static_cast<int>(tag));
     }
   }
   return mod->execute(name, inputs);

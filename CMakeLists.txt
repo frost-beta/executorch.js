@@ -57,17 +57,24 @@ FetchContent_Declare(kizunapi GIT_REPOSITORY https://github.com/yue/kizunapi.git
 FetchContent_MakeAvailable(kizunapi)
 target_include_directories(${PROJECT_NAME} PRIVATE "${kizunapi_SOURCE_DIR}")
 
+# Use fmt when building with old compilers.
+target_compile_definitions(${PROJECT_NAME} PRIVATE ETJS_USE_FMT)
+FetchContent_Declare(fmt GIT_REPOSITORY https://github.com/fmtlib/fmt
+                         GIT_TAG e69e5f977d458f2650bb346dadf2ad30c5320281)
+FetchContent_MakeAvailable(fmt)
+target_include_directories(${PROJECT_NAME} PRIVATE "${fmt_SOURCE_DIR}/include")
+
 # Download the executorch binaries.
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   set(TORCH_OS "mac")
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
   set(TORCH_OS "linux")
 else()
   message(FATAL_ERROR "Unsupported OS: ${CMAKE_SYSTEM_NAME}")
 endif()
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
   set(TORCH_ARCH "x64")
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
   set(TORCH_ARCH "arm64")
 else()
   message(FATAL_ERROR "Unsupported arch: ${CMAKE_SYSTEM_PROCESSOR}")

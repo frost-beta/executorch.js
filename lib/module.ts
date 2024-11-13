@@ -82,11 +82,25 @@ export class Module {
       if (meta instanceof Error)
         throw meta;
       const inputs: EValueInfo[] = [];
-      for (let i = 0; i < meta.numInputs(); ++i)
-        inputs.push(parseEValueInfo(meta.inputTag(i), meta.inputTensorMeta(i)));
+      for (let i = 0; i < meta.numInputs(); ++i) {
+        const tag = meta.inputTag(i);
+        if (tag instanceof Error)
+          throw tag;
+        if (tag == bindings.Tag.Tensor)
+          inputs.push(parseEValueInfo(tag, meta.inputTensorMeta(i)));
+        else
+          inputs.push({tag});
+      }
       const outputs: EValueInfo[] = [];
-      for (let i = 0; i < meta.numOutputs(); ++i)
-        outputs.push(parseEValueInfo(meta.outputTag(i), meta.outputTensorMeta(i)));
+      for (let i = 0; i < meta.numOutputs(); ++i) {
+        const tag = meta.outputTag(i);
+        if (tag instanceof Error)
+          throw tag;
+        if (tag == bindings.Tag.Tensor)
+          outputs.push(parseEValueInfo(tag, meta.outputTensorMeta(i)));
+        else
+          outputs.push({tag});
+      }
       return {name, inputs, outputs};
     });
   }
@@ -114,17 +128,12 @@ function executionResult(result: unknown[] | string | Error) {
     return result;
 }
 
-function parseEValueInfo(tag: bindings.Tag | Error,
+function parseEValueInfo(tag: bindings.Tag,
                          info: bindings.TensorInfo | Error): EValueInfo {
-  if (tag instanceof Error)
-    throw tag;
   if (info instanceof Error)
     throw info;
-  const result = {tag: tag as unknown as bindings.Tag};
-  if (tag != bindings.Tag.Tensor)
-    return result;
   return {
-    ...result,
+    tag,
     dtype: info.scalarType as unknown as DType,
     shape: info.sizes,
     dimOrder: info.dimOrder,

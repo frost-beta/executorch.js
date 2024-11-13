@@ -24,14 +24,17 @@ async function main() {
   const os = {darwin: 'mac', win32: 'win'}[process.platform] ?? process.platform;
   const arch = process.arch;
   const version = packageJson.version;
+  const config = process.env.npm_config_debug ? 'debug' : 'release';
 
   let backend;
-  if (packageJson.name.includes('-'))
+  if (packageJson.name == 'executorch' || packageJson.name.endsWith('-all'))
+    backend = 'all'
+  else if (packageJson.name.includes('-'))
     backend = packageJson.name.substring(packageJson.name.lastIndexOf('-') + 1);
   else
     backend = os == 'mac' ? 'mps' : 'xnnpack';
 
-  const prefix = `${urlPrefix}/v${version}/executorch-${backend}-${os}-${arch}-release`;
+  const prefix = `${urlPrefix}/v${version}/executorch-${backend}-${os}-${arch}-${config}`;
   await download(`${prefix}.node.gz`, `${dir}/executorch.node`);
 }
 

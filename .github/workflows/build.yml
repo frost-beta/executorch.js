@@ -17,7 +17,7 @@ jobs:
       matrix:
         os: [linux, mac]
         arch: [arm64, x64]
-        backend: [cpu, xnnpack, mps]
+        backend: [all, cpu, mps, xnnpack]
         exclude:
           - os: linux
             arch: arm64

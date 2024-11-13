@@ -17,17 +17,17 @@ describe('Module', () => {
     assert.deepEqual(mod.getMethodNames(), [ 'forward' ]);
   });
 
-  const models: Record<string, string> = {
+  const models = {
     cpu: 'mv2.pte',
     mps: 'mv2_mps_float16.pte',
     xnnpack: 'mv2_xnnpack_fp32.pte',
   };
-  for (const [ name, enabled ] of Object.entries(backends)) {
-    if (!enabled)
+  for (const [ name, model ] of Object.entries(models)) {
+    if (!backends[name as keyof typeof backends])
       continue;
     it(`${name} backend`, async function () {
       this.timeout((config == 'Debug' ? 20 : 10) * 1000);
-      const mod = new Module(`${fixtures}/${models[name]}`);
+      const mod = new Module(`${fixtures}/${model}`);
       await mod.load();
       const {shape} = mod.getMethods()[0].inputs[0];
       const input = new Tensor(Buffer.alloc(4 * getSizeFromShape(shape!)), DType.Float32, {shape});

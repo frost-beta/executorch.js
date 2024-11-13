@@ -18,11 +18,19 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(TORCH_VERSION "0.0.3" CACHE STRING "The version of executorch-binaries")
 set(TORCH_BINARY_URL "https://github.com/frost-beta/executorch-binaries/releases/download" CACHE STRING "The download URL of executorch-binaries")
+option(TORCH_BACKEND_ALL "Build with all backends" OFF)
 option(TORCH_BACKEND_COREML "Build with CoreML backend" OFF)
 option(TORCH_BACKEND_MPS "Build with MPS backend" OFF)
 option(TORCH_BACKEND_XNNPACK "Build with XNNPACK backend" OFF)
 option(TORCH_KERNELS_OPTIMIZED "Build with Optimzied kernels" OFF)
 option(TORCH_KERNELS_PORTABLE "Build with Portable kernels" ON)
+
+if(TORCH_BACKEND_ALL)
+  set(TORCH_BACKEND_XNNPACK ON)
+  if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set(TORCH_BACKEND_MPS ON)
+  endif()
+endif()
 
 # ----------------------------- Node-API -------------------------------
 
@@ -148,6 +156,7 @@ message(STATUS "  CMAKE_BUILD_TYPE              : ${CMAKE_BUILD_TYPE}")
 message(STATUS "  CMAKE_CXX_STANDARD            : ${CMAKE_CXX_STANDARD}")
 message(STATUS "  TORCH_VERSION                 : ${TORCH_VERSION}")
 message(STATUS "  TORCH_BINARY_URL              : ${TORCH_BINARY_URL}")
+message(STATUS "  TORCH_BACKEND_ALL             : ${TORCH_BACKEND_ALL}")
 message(STATUS "  TORCH_BACKEND_COREML          : ${TORCH_BACKEND_COREML}")
 message(STATUS "  TORCH_BACKEND_MPS             : ${TORCH_BACKEND_MPS}")
 message(STATUS "  TORCH_BACKEND_XNNPACK         : ${TORCH_BACKEND_XNNPACK}")

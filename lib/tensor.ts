@@ -57,7 +57,8 @@ export class Tensor {
       // Create from JavaScript array or scalar.
       this.dtype = dtype ?? getInputDType(input);
       this.shape = shape ?? getInputShape(input);
-      let flatData = Array.isArray(input) ? input.flat() : [ input ];
+      // @ts-ignore
+      let flatData = Array.isArray(input) ? input.flat(Infinity) : [ input ];
       if (typeof flatData[0] != 'number')
         flatData = flatData.map(f => Number(f));
       if (shape && flatData.length < getSizeFromShape(shape))
@@ -167,7 +168,7 @@ function getInputShape(input: Nested<boolean | number>): number[] {
 
 function getTypedArrayFromDType(dtype: DType) {
   switch (dtype) {
-    case DType.UInt8   : return Uint8Array;
+    case DType.Uint8   : return Uint8Array;
     case DType.Int8    : return Int8Array;
     case DType.Int16   : return Int16Array;
     case DType.Int32   : return Int32Array;

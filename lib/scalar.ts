@@ -1,7 +1,10 @@
 import bindings from '../bindings.js';
 
+/**
+ * Data type.
+ */
 export enum DType {
-  UInt8    = bindings.ScalarType.Byte,
+  Uint8    = bindings.ScalarType.Byte,
   Int8     = bindings.ScalarType.Char,
   Int16    = bindings.ScalarType.Short,
   Int32    = bindings.ScalarType.Int,

@@ -9,6 +9,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          # Required by npm publish.
+          registry-url: https://registry.npmjs.org
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -23,9 +30,16 @@ jobs:
       - name: Install deps
         run: yarn
 
-      - name: Publish npm package
-        uses: JS-DevTools/npm-publish@v3
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          access: public
-          ignore-scripts: false
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm publish
+          npx dot-json package.json name @executorch/runtime
+          npm publish --access public
+          npx dot-json package.json name @executorch/runtime-cpu
+          npm publish --access public
+          npx dot-json package.json name @executorch/runtime-mps
+          npm publish --access public
+          npx dot-json package.json name @executorch/runtime-xnnpack
+          npm publish --access public

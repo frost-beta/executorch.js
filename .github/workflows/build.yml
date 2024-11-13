@@ -48,6 +48,7 @@ jobs:
             --debug      \
             --parallel 4 \
             --CDTORCH_BACKEND_${{ steps.backend.outputs.uppercase }}=ON
+          cp build/Debug/executorch.node executorch-${{ matrix.backend }}-${{ matrix.os }}-${{ matrix.arch }}-debug.node
 
       - name: Test
         id: test
@@ -65,9 +66,7 @@ jobs:
           yarn build     \
             --parallel 4 \
             --CDTORCH_BACKEND_${{ steps.backend.outputs.uppercase }}=ON
-
-      - name: Prepare .node File
-        run: cp build/Release/executorch.node executorch-${{ matrix.backend }}-${{ matrix.os }}-${{ matrix.arch }}.node
+          cp build/Release/executorch.node executorch-${{ matrix.backend }}-${{ matrix.os }}-${{ matrix.arch }}-release.node
 
       - name: Upload Binary Files
         uses: actions/upload-artifact@v4
@@ -97,6 +96,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          name: executorch.js ${{ github.ref_name }}
+          name: ExecuTorch.js ${{ github.ref_name }}
           body: '## Changelog'
           files: '*.gz'

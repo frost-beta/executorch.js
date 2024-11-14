@@ -1,4 +1,4 @@
-# ----------------------------- CMake ----------------------------------
+# ----------------------------- Setup ----------------------------------
 
 cmake_minimum_required(VERSION 3.24)
 include(FetchContent)
@@ -6,6 +6,8 @@ include(FetchContent)
 # https://github.com/cmake-js/cmake-js#node-api-and-node-addon-api
 cmake_policy(SET CMP0091 NEW)
 cmake_policy(SET CMP0042 NEW)
+# Allow FetchContent_Populate.
+cmake_policy(SET CMP0169 OLD)
 
 # ----------------------------- Project --------------------------------
 
@@ -96,7 +98,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${kizunapi_SOURCE_DIR}")
 target_compile_definitions(${PROJECT_NAME} PRIVATE ETJS_USE_FMT)
 FetchContent_Declare(fmt GIT_REPOSITORY https://github.com/fmtlib/fmt
                          GIT_TAG e69e5f977d458f2650bb346dadf2ad30c5320281)
-FetchContent_MakeAvailable(fmt)
+# Do not call FetchContent_MakeAvailable as we only need headers.
+FetchContent_GetProperties(fmt)
+if(NOT fmt_POPULATED)
+  FetchContent_Populate(fmt)
+endif()
 target_include_directories(${PROJECT_NAME} PRIVATE "${fmt_SOURCE_DIR}/include")
 
 # Download the executorch binaries.

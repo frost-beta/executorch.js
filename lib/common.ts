@@ -9,6 +9,7 @@ export enum DType {
   Int8     = bindings.ScalarType.Char,
   Int16    = bindings.ScalarType.Short,
   Int32    = bindings.ScalarType.Int,
+  Int64    = bindings.ScalarType.Long,
   Float16  = bindings.ScalarType.Half,
   Float32  = bindings.ScalarType.Float,
   Float64  = bindings.ScalarType.Double,

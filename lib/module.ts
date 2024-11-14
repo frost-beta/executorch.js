@@ -122,10 +122,11 @@ function executionResult(result: unknown[] | string | Error) {
     throw result;
   if (typeof result == 'string')
     throw new Error(result);
-  if (result.length == 1)
-    return result[0];
+  const evalues = result.map(r => r instanceof bindings.Tensor ? new Tensor(r) : r);
+  if (evalues.length == 1)
+    return evalues[0];
   else
-    return result;
+    return evalues;
 }
 
 function parseEValueInfo(tag: bindings.Tag,

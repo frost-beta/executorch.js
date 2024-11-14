@@ -40,7 +40,7 @@ export class Tensor {
    * @param options.dimOrder
    * @param options.strides
    */
-  constructor(input: Nested<boolean | number> | Uint8Array,
+  constructor(input: Nested<boolean | number> | Uint8Array | bindings.Tensor,
               dtype?: DType,
               {shape, dimOrder = [], strides = []}: TensorOptions = {}) {
     if (input instanceof Uint8Array) {
@@ -53,6 +53,12 @@ export class Tensor {
       this.shape = shape;
       this.data = input;
       this.holder = new bindings.Tensor(this.data, this.dtype, this.shape, dimOrder, strides);
+    } else if (input instanceof bindings.Tensor) {
+      // Wrap an existing binding.
+      this.dtype = input.dtype;
+      this.shape = input.shape;
+      this.data = input.data;
+      this.holder = input;
     } else {
       // Create from JavaScript array or scalar.
       this.dtype = dtype ?? getInputDType(input);

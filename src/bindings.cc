@@ -3,6 +3,7 @@
 
 #include "src/evalue.h"
 #include "src/module.h"
+#include "src/sample.h"
 #include "src/scalar.h"
 #include "src/tensor.h"
 
@@ -42,7 +43,8 @@ napi_value Init(napi_env env, napi_value exports) {
 #else
           "config", "Release",
 #endif
-          "elementSize", &er::elementSize);
+          "elementSize", &er::elementSize,
+          "sample", &etjs::Sample);
   return exports;
 }
 

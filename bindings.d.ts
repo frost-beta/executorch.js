@@ -85,3 +85,4 @@ export const backends: Backends;
 export const config: 'Debug' | 'Release';
 
 export function elementSize(dtype: number): number;
+export function sample(tensor: Tensor, temperature: number, topP: number): number;

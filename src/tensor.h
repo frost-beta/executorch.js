@@ -42,7 +42,7 @@ class Tensor {
   size_t itemsize() const { return impl_.element_size(); }
 
   template<typename T>
-  const T* data() const { return static_cast<const T*>(data_.data); }
+  T* data() { return static_cast<T*>(data_.data); }
 
  private:
   Buffer data_;

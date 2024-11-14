@@ -1,5 +1,5 @@
 import bindings from '../bindings.js';
-import {DType} from './scalar.js';
+import {DType} from './common.js';
 
 type Nested<T> = Nested<T>[] | T;
 
@@ -30,7 +30,7 @@ export class Tensor {
   readonly shape: number[];
 
   // Internal binding to the executorch::aten::Tensor instance.
-  private readonly holder: bindings.Tensor;
+  readonly holder: bindings.Tensor;
 
   /**
    * @param input - A scalar, or a (nested) Array, or a Uint8Array buffer.

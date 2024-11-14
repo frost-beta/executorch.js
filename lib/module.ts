@@ -1,5 +1,5 @@
 import bindings from '../bindings.js';
-import {DType} from './scalar.js';
+import {DType} from './common.js';
 import {Tensor} from './tensor.js';
 
 /**

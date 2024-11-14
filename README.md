@@ -136,15 +136,6 @@ export declare enum DType {
     BFloat16
 }
 
-/**
- * Optional options describing the tensor.
- */
-export interface TensorOptions {
-    shape?: number[];
-    dimOrder?: number[];
-    strides?: number[];
-}
-
 type Nested<T> = Nested<T>[] | T;
 
 /**
@@ -171,7 +162,9 @@ export declare class Tensor {
      * @param options.dimOrder
      * @param options.strides
      */
-    constructor(input: Nested<boolean | number> | Uint8Array, dtype?: DType, { shape, dimOrder, strides }?: TensorOptions);
+    constructor(input: Nested<boolean | number> | Uint8Array,
+                dtype?: DType,
+                { shape, dimOrder, strides }?: { shape?: number[]; dimOrder?: number[]; strides?: number[]; });
     /**
      * Return the tensor as a scalar.
      */
@@ -209,6 +202,15 @@ export declare class Tensor {
      */
     get itemsize(): number;
 }
+
+/**
+ * Samples from the given tensor using a softmax over logits.
+ */
+export declare function sample(logits: Tensor,
+                               {
+                                 temperature = 1,
+                                 topP = 1,
+                               }?: { temperature?: number; topP?: number }): number;
 ```
 
 ## Development

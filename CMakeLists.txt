@@ -16,19 +16,27 @@ set(CMAKE_CXX_STANDARD 20)
 
 # ----------------------------- Config ---------------------------------
 
-set(TORCH_VERSION "0.0.3" CACHE STRING "The version of executorch-binaries")
+set(TORCH_VERSION "0.0.4" CACHE STRING "The version of executorch-binaries")
 set(TORCH_BINARY_URL "https://github.com/frost-beta/executorch-binaries/releases/download" CACHE STRING "The download URL of executorch-binaries")
 option(TORCH_BACKEND_ALL "Build with all backends" OFF)
 option(TORCH_BACKEND_COREML "Build with CoreML backend" OFF)
 option(TORCH_BACKEND_MPS "Build with MPS backend" OFF)
 option(TORCH_BACKEND_XNNPACK "Build with XNNPACK backend" OFF)
-option(TORCH_KERNELS_OPTIMIZED "Build with Optimzied kernels" OFF)
-option(TORCH_KERNELS_PORTABLE "Build with Portable kernels" ON)
+option(TORCH_KERNELS_CUSTOM "Build with custom kernels" ON)
+option(TORCH_KERNELS_OPTIMIZED "Build with optimzied kernels" ON)
+option(TORCH_KERNELS_QUANTIZED "Build with quantized kernels" ON)
 
 if(TORCH_BACKEND_ALL)
   set(TORCH_BACKEND_XNNPACK ON)
   if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(TORCH_BACKEND_MPS ON)
+  endif()
+endif()
+
+# https://github.com/pytorch/executorch/issues/6839
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+    set(TORCH_KERNELS_CUSTOM=OFF)
   endif()
 endif()
 
@@ -137,15 +145,26 @@ if(TORCH_BACKEND_XNNPACK)
                         "$<${TORCH_LIBS_WHOLE}/libmicrokernels-prod.a>"
                         "$<${TORCH_LIBS_WHOLE}/libxnnpack_backend.a>")
 endif()
+if(TORCH_KERNELS_CUSTOM)
+  target_link_libraries(${PROJECT_NAME} PRIVATE
+                        "${TORCH_LIBS}/libcpuinfo.a"
+                        "${TORCH_LIBS}/libportable_kernels.a"
+                        "${TORCH_LIBS}/libportable_ops_lib.a"
+                        "$<${TORCH_LIBS_WHOLE}/libcustom_ops.a>")
+else()
+  target_link_libraries(${PROJECT_NAME} PRIVATE
+                        "$<${TORCH_LIBS_WHOLE}/libportable_kernels.a>"
+                        "$<${TORCH_LIBS_WHOLE}/libportable_ops_lib.a>")
+endif()
 if(TORCH_KERNELS_OPTIMIZED)
   target_link_libraries(${PROJECT_NAME} PRIVATE
                         "$<${TORCH_LIBS_WHOLE}/liboptimized_kernels.a>"
                         "$<${TORCH_LIBS_WHOLE}/liboptimized_native_cpu_ops_lib.a>")
 endif()
-if(TORCH_KERNELS_PORTABLE)
+if(TORCH_KERNELS_QUANTIZED)
   target_link_libraries(${PROJECT_NAME} PRIVATE
-                        "$<${TORCH_LIBS_WHOLE}/libportable_kernels.a>"
-                        "$<${TORCH_LIBS_WHOLE}/libportable_ops_lib.a>")
+                        "$<${TORCH_LIBS_WHOLE}/libquantized_kernels.a>"
+                        "$<${TORCH_LIBS_WHOLE}/libquantized_ops_lib.a>")
 endif()
 
 # --------------------------- Summary ----------------------------------
@@ -160,6 +179,8 @@ message(STATUS "  TORCH_BACKEND_ALL             : ${TORCH_BACKEND_ALL}")
 message(STATUS "  TORCH_BACKEND_COREML          : ${TORCH_BACKEND_COREML}")
 message(STATUS "  TORCH_BACKEND_MPS             : ${TORCH_BACKEND_MPS}")
 message(STATUS "  TORCH_BACKEND_XNNPACK         : ${TORCH_BACKEND_XNNPACK}")
+message(STATUS "  TORCH_KERNELS_CUSTOM          : ${TORCH_KERNELS_CUSTOM}")
 message(STATUS "  TORCH_KERNELS_OPTIMIZED       : ${TORCH_KERNELS_OPTIMIZED}")
 message(STATUS "  TORCH_KERNELS_PORTABLE        : ${TORCH_KERNELS_PORTABLE}")
+message(STATUS "  TORCH_KERNELS_QUANTIZED       : ${TORCH_KERNELS_QUANTIZED}")
 message(STATUS "")

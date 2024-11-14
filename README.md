@@ -12,8 +12,11 @@ JavaScript runtimes:
 
 Platforms:
 
-* macOS x64 and arm64
 * Linux x64
+* macOS arm64
+* macOS x64
+  * [Some ops](https://github.com/pytorch/executorch/issues/6839) required
+    for running LLMs are not supported yet.
 * <i>Plan on: Windows, Linux arm64, iOS, Android</i>
 
 Backends:

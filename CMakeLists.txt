@@ -59,6 +59,26 @@ if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
                   ${CMAKE_STATIC_LINKER_FLAGS})
 endif()
 
+# -------------------------- Utilities ---------------------------------
+
+# Behave the same with the target_link_options_shared_lib util of ExecuTorch.
+function(target_force_link_libraries target_name linker_type)
+  foreach(target_lib ${ARGN})
+    if(APPLE)
+      target_link_options(${target_name} ${linker_type}
+                          "SHELL:LINKER:-force_load,${target_lib}")
+    elseif(MSVC)
+      target_link_options(${target_name} ${linker_type}
+                          "SHELL:LINKER:/WHOLEARCHIVE:${target_lib}")
+    else()
+      target_link_options(${target_name} ${linker_type}
+                          "SHELL:LINKER:--whole-archive \
+                          ${target_lib} \
+                          LINKER:--no-whole-archive")
+    endif()
+  endforeach()
+endfunction()
+
 # ----------------------------- Lib ------------------------------------
 
 # Add source files.
@@ -103,67 +123,69 @@ endif()
 FetchContent_Declare(torch_lib URL "${TORCH_BINARY_URL}/v${TORCH_VERSION}/executorch-full-${TORCH_CONFIG}-${TORCH_OS}-${TORCH_ARCH}.zip")
 FetchContent_MakeAvailable(torch_lib)
 set(TORCH_LIBS "${torch_lib_SOURCE_DIR}/libs")
-set(TORCH_LIBS_WHOLE "LINK_LIBRARY:WHOLE_ARCHIVE,${TORCH_LIBS}")
 
 # Link with correct libs.
 target_include_directories(${PROJECT_NAME} PRIVATE
                            "${torch_lib_SOURCE_DIR}/include")
 target_link_libraries(${PROJECT_NAME} PRIVATE
+                      "${TORCH_LIBS}/libcpuinfo.a"
                       "${TORCH_LIBS}/libexecutorch_core.a"
-                      "${TORCH_LIBS}/libextension_module_static.a"
-                      "$<${TORCH_LIBS_WHOLE}/libexecutorch.a>"
-                      "$<${TORCH_LIBS_WHOLE}/libextension_data_loader.a>")
+                      "${TORCH_LIBS}/libextension_module_static.a")
+target_force_link_libraries(${PROJECT_NAME} PRIVATE
+                            "${TORCH_LIBS}/libexecutorch.a"
+                            "${TORCH_LIBS}/libextension_data_loader.a")
 if(TORCH_BACKEND_COREML)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE ETJS_BACKEND_COREML)
+  target_compile_definitions(${PROJECT_NAME} PUBLIC ETJS_BACKEND_COREML)
   find_library(ACCELERATE_FRAMEWORK Accelerate)
   find_library(COREML_FRAMEWORK CoreML)
-  target_link_libraries(${PROJECT_NAME} PRIVATE
+  target_link_libraries(${PROJECT_NAME} PUBLIC
                         ${ACCELERATE_FRAMEWORK}
-                        ${COREML_FRAMEWORK}
-                        "$<${TORCH_LIBS_WHOLE}/libcoremldelegate.a>")
+                        ${COREML_FRAMEWORK})
+  target_force_link_libraries(${PROJECT_NAME} PRIVATE
+                              "${TORCH_LIBS}/libcoremldelegate.a")
 endif()
 if(TORCH_BACKEND_MPS)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE ETJS_BACKEND_MPS)
+  target_compile_definitions(${PROJECT_NAME} PUBLIC ETJS_BACKEND_MPS)
   find_library(FOUNDATION_FRAMEWORK Foundation)
   find_library(METAL_FRAMEWORK Metal)
   find_library(MPS_FRAMEWORK MetalPerformanceShaders)
   find_library(MPS_GRAPH_FRAMEWORK MetalPerformanceShadersGraph)
-  target_link_libraries(${PROJECT_NAME} PRIVATE
+  target_link_libraries(${PROJECT_NAME} PUBLIC
                         ${FOUNDATION_FRAMEWORK}
                         ${METAL_FRAMEWORK}
                         ${MPS_FRAMEWORK}
-                        ${MPS_GRAPH_FRAMEWORK}
-                        "$<${TORCH_LIBS_WHOLE}/libmpsdelegate.a>")
+                        ${MPS_GRAPH_FRAMEWORK})
+  target_force_link_libraries(${PROJECT_NAME} PRIVATE
+                              "${TORCH_LIBS}/libmpsdelegate.a")
 endif()
 if(TORCH_BACKEND_XNNPACK)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE ETJS_BACKEND_XNNPACK)
-  target_link_libraries(${PROJECT_NAME} PRIVATE
-                        "$<${TORCH_LIBS_WHOLE}/libXNNPACK.a>"
-                        "$<${TORCH_LIBS_WHOLE}/libcpuinfo.a>"
-                        "$<${TORCH_LIBS_WHOLE}/libpthreadpool.a>"
-                        "$<${TORCH_LIBS_WHOLE}/libmicrokernels-prod.a>"
-                        "$<${TORCH_LIBS_WHOLE}/libxnnpack_backend.a>")
+  target_compile_definitions(${PROJECT_NAME} PUBLIC ETJS_BACKEND_XNNPACK)
+  target_force_link_libraries(${PROJECT_NAME} PRIVATE
+                              "${TORCH_LIBS}/libXNNPACK.a"
+                              "${TORCH_LIBS}/libpthreadpool.a"
+                              "${TORCH_LIBS}/libmicrokernels-prod.a"
+                              "${TORCH_LIBS}/libxnnpack_backend.a")
 endif()
 if(TORCH_KERNELS_CUSTOM)
   target_link_libraries(${PROJECT_NAME} PRIVATE
-                        "${TORCH_LIBS}/libcpuinfo.a"
                         "${TORCH_LIBS}/libportable_kernels.a"
-                        "${TORCH_LIBS}/libportable_ops_lib.a"
-                        "$<${TORCH_LIBS_WHOLE}/libcustom_ops.a>")
+                        "${TORCH_LIBS}/libportable_ops_lib.a")
+  target_force_link_libraries(${PROJECT_NAME} PRIVATE
+                              "${TORCH_LIBS}/libcustom_ops.a")
 else()
-  target_link_libraries(${PROJECT_NAME} PRIVATE
-                        "$<${TORCH_LIBS_WHOLE}/libportable_kernels.a>"
-                        "$<${TORCH_LIBS_WHOLE}/libportable_ops_lib.a>")
+  target_force_link_libraries(${PROJECT_NAME} PRIVATE
+                              "${TORCH_LIBS}/libportable_kernels.a"
+                              "${TORCH_LIBS}/libportable_ops_lib.a")
 endif()
 if(TORCH_KERNELS_OPTIMIZED)
-  target_link_libraries(${PROJECT_NAME} PRIVATE
-                        "$<${TORCH_LIBS_WHOLE}/liboptimized_kernels.a>"
-                        "$<${TORCH_LIBS_WHOLE}/liboptimized_native_cpu_ops_lib.a>")
+  target_force_link_libraries(${PROJECT_NAME} PRIVATE
+                              "${TORCH_LIBS}/liboptimized_kernels.a"
+                              "${TORCH_LIBS}/liboptimized_native_cpu_ops_lib.a")
 endif()
 if(TORCH_KERNELS_QUANTIZED)
-  target_link_libraries(${PROJECT_NAME} PRIVATE
-                        "$<${TORCH_LIBS_WHOLE}/libquantized_kernels.a>"
-                        "$<${TORCH_LIBS_WHOLE}/libquantized_ops_lib.a>")
+  target_force_link_libraries(${PROJECT_NAME} PRIVATE
+                              "${TORCH_LIBS}/libquantized_kernels.a"
+                              "${TORCH_LIBS}/libquantized_ops_lib.a")
 endif()
 
 # --------------------------- Summary ----------------------------------

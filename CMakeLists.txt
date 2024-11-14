@@ -34,10 +34,9 @@ if(TORCH_BACKEND_ALL)
 endif()
 
 # https://github.com/pytorch/executorch/issues/6839
-if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-  if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-    set(TORCH_KERNELS_CUSTOM=OFF)
-  endif()
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+  set(TORCH_KERNELS_CUSTOM OFF)
+  set(TORCH_KERNELS_OPTIMIZED OFF)
 endif()
 
 # ----------------------------- Node-API -------------------------------
@@ -181,6 +180,5 @@ message(STATUS "  TORCH_BACKEND_MPS             : ${TORCH_BACKEND_MPS}")
 message(STATUS "  TORCH_BACKEND_XNNPACK         : ${TORCH_BACKEND_XNNPACK}")
 message(STATUS "  TORCH_KERNELS_CUSTOM          : ${TORCH_KERNELS_CUSTOM}")
 message(STATUS "  TORCH_KERNELS_OPTIMIZED       : ${TORCH_KERNELS_OPTIMIZED}")
-message(STATUS "  TORCH_KERNELS_PORTABLE        : ${TORCH_KERNELS_PORTABLE}")
 message(STATUS "  TORCH_KERNELS_QUANTIZED       : ${TORCH_KERNELS_QUANTIZED}")
 message(STATUS "")

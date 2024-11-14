@@ -55,7 +55,7 @@ by setting the `npm_config_debug` environment variable when installing:
 $ env npm_config_debug=true npm install @executorch/runtime-xnnpack
 ```
 
-## Example
+## Quick start
 
 Download the mobilenet model:
 
@@ -79,6 +79,11 @@ await mod.load();
 const output = await mod.forward(new Tensor(input));
 console.log(output.tolist());
 ```
+
+## Examples
+
+* [llama3-torch.js](https://github.com/frost-beta/llama3-torch.js) - A simple
+  chat CLI for LLama 3.
 
 ## APIs
 

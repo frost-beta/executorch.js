@@ -66,7 +66,7 @@ $ wget https://huggingface.co/frost-beta/mobilenet-v2-executorch-cpu/resolve/mai
 Run following code with Node.js:
 
 ```typescript
-import {Module, Tensor} from './dist/index.js';
+import {Module, Tensor} from 'executorch';
 
 // A tensor of shape [ 1, 3, 224, 224 ].
 const input = Array.from({length: 1}, () =>
@@ -134,6 +134,7 @@ export declare enum DType {
     Int8,
     Int16,
     Int32,
+    Int64,
     Float16,
     Float32,
     Float64,

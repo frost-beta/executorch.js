@@ -174,6 +174,8 @@ if(TORCH_BACKEND_XNNPACK)
 endif()
 if(TORCH_KERNELS_CUSTOM)
   target_link_libraries(${PROJECT_NAME} PRIVATE
+                        "${TORCH_LIBS}/libcpublas.a"
+                        "${TORCH_LIBS}/libeigen_blas.a"
                         "${TORCH_LIBS}/libportable_kernels.a"
                         "${TORCH_LIBS}/libportable_ops_lib.a")
   target_force_link_libraries(${PROJECT_NAME} PRIVATE

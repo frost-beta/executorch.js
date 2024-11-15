@@ -166,9 +166,10 @@ if(TORCH_BACKEND_MPS)
 endif()
 if(TORCH_BACKEND_XNNPACK)
   target_compile_definitions(${PROJECT_NAME} PUBLIC ETJS_BACKEND_XNNPACK)
+  target_link_libraries(${PROJECT_NAME} PRIVATE
+                        "${TORCH_LIBS}/libpthreadpool.a")
   target_force_link_libraries(${PROJECT_NAME} PRIVATE
                               "${TORCH_LIBS}/libXNNPACK.a"
-                              "${TORCH_LIBS}/libpthreadpool.a"
                               "${TORCH_LIBS}/libmicrokernels-prod.a"
                               "${TORCH_LIBS}/libxnnpack_backend.a")
 endif()
@@ -177,7 +178,7 @@ if(TORCH_KERNELS_CUSTOM)
                         "${TORCH_LIBS}/libcpublas.a"
                         "${TORCH_LIBS}/libeigen_blas.a"
                         "${TORCH_LIBS}/libportable_kernels.a"
-                        "${TORCH_LIBS}/libportable_ops_lib.a")
+                        "${TORCH_LIBS}/libpthreadpool.a")
   target_force_link_libraries(${PROJECT_NAME} PRIVATE
                               "${TORCH_LIBS}/libcustom_ops.a")
 else()
